@@ -1,0 +1,21 @@
+{
+    "agents": [
+        "claude_code",
+        "cursor",
+        "gemini",
+        "copilot",
+        "codex"
+    ],
+    "cloud": false,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "fluxui-development",
+        "volt-development",
+        "pest-testing",
+        "tailwindcss-development"
+    ]
+}

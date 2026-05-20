@@ -35,6 +35,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::resource('users', UserController::class);
+
+    Volt::route('clientes', 'clientes.index')->name('clientes.index');
+    Volt::route('clientes/create', 'clientes.create')->name('clientes.create');
+    Volt::route('clientes/{cliente}/edit', 'clientes.edit')->name('clientes.edit');
 });
 
 require __DIR__.'/auth.php';

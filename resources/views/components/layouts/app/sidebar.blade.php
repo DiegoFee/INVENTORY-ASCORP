@@ -18,6 +18,7 @@
 
                     @if (auth()->user()->hasRole(\App\Models\Role::Admin))
                         <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>Usuarios</flux:navlist.item>
+                        <flux:navlist.item icon="users" :href="route('clientes.index')" :current="request()->routeIs('clientes.*')" wire:navigate>Clientes</flux:navlist.item>
                     @endif
                 </flux:navlist.group>
             </flux:navlist>

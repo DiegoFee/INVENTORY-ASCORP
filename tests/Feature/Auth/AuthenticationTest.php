@@ -10,7 +10,7 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->seller()->create();
 
     $response = LivewireVolt::test('auth.login')
         ->set('email', $user->email)
@@ -19,7 +19,7 @@ test('users can authenticate using the login screen', function () {
 
     $response
         ->assertHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('sales.dashboard', absolute: false));
 
     $this->assertAuthenticated();
 });
@@ -33,6 +33,28 @@ test('users can not authenticate with invalid password', function () {
     ]);
 
     $this->assertGuest();
+});
+
+test('admins are redirected to the administrative dashboard after login', function () {
+    $user = User::factory()->admin()->create();
+
+    LivewireVolt::test('auth.login')
+        ->set('email', $user->email)
+        ->set('password', 'password')
+        ->call('login')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('warehouse users are redirected to the inventory dashboard after login', function () {
+    $user = User::factory()->warehouse()->create();
+
+    LivewireVolt::test('auth.login')
+        ->set('email', $user->email)
+        ->set('password', 'password')
+        ->call('login')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('inventory.dashboard', absolute: false));
 });
 
 test('users can logout', function () {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -26,12 +27,16 @@ new #[Layout('components.layouts.auth')] class extends Component {
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['role_id'] = Role::query()->firstOrCreate(
+            ['name' => Role::Seller],
+            ['permissions' => ['sales.access', 'clients.access']]
+        )->id;
 
         event(new Registered(($user = User::create($validated))));
 
         Auth::login($user);
 
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        $this->redirect(route($user->homeRouteName(), absolute: false), navigate: true);
     }
 }; ?>
 

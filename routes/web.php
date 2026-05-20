@@ -8,7 +8,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'role:Admin'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
@@ -17,6 +17,18 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('dashboard/ventas', 'dashboard', [
+        'title' => 'Panel de ventas',
+        'description' => 'Acceso inicial para vendedores y cajeros.',
+    ])->middleware('role:Admin,Vendedor')->name('sales.dashboard');
+
+    Route::view('dashboard/bodega', 'dashboard', [
+        'title' => 'Panel de bodega',
+        'description' => 'Acceso inicial para inventario y productos.',
+    ])->middleware('role:Admin,Bodeguero')->name('inventory.dashboard');
 });
 
 require __DIR__.'/auth.php';

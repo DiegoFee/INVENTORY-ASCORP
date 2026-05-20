@@ -2,12 +2,14 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -24,6 +26,10 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::Seller],
+                ['permissions' => ['sales.access', 'clients.access']]
+            )->id,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -39,6 +45,36 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::Admin],
+                ['permissions' => ['*']]
+            )->id,
+        ]);
+    }
+
+    public function seller(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::Seller],
+                ['permissions' => ['sales.access', 'clients.access']]
+            )->id,
+        ]);
+    }
+
+    public function warehouse(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::Warehouse],
+                ['permissions' => ['inventory.access', 'products.access', 'suppliers.access']]
+            )->id,
         ]);
     }
 }

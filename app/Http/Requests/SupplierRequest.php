@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use App\Models\Supplier;
 
 class SupplierRequest extends FormRequest
 {
@@ -14,23 +14,43 @@ class SupplierRequest extends FormRequest
 
     public function rules(): array
     {
-        $supplier = $this->route('supplier'); // Obtiene el modelo o el ID
+        $supplier = $this->route('supplier'); // null en creación, modelo en edición
 
         return [
             'nombre' => 'required|string|max:255',
+
             'nit' => [
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('proveedores', 'nit')->ignore($supplier)
+                function ($attribute, $value, $fail) use ($supplier) {
+                    $query = Supplier::where('nit', $value)->whereNull('deleted_at');
+                    if ($supplier) {
+                        $query->where('id', '!=', $supplier->id);
+                    }
+                    if ($query->exists()) {
+                        $fail('Este NIT ya está registrado en un proveedor activo.');
+                    }
+                },
             ],
+
             'telefono' => 'required|string|max:20',
+
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('proveedores', 'email')->ignore($supplier)
+                function ($attribute, $value, $fail) use ($supplier) {
+                    $query = Supplier::where('email', $value)->whereNull('deleted_at');
+                    if ($supplier) {
+                        $query->where('id', '!=', $supplier->id);
+                    }
+                    if ($query->exists()) {
+                        $fail('Este correo ya está registrado en un proveedor activo.');
+                    }
+                },
             ],
+
             'direccion' => 'required|string',
             'contacto_nombre' => 'nullable|string|max:255',
         ];
@@ -41,11 +61,9 @@ class SupplierRequest extends FormRequest
         return [
             'nombre.required' => 'El nombre del proveedor es obligatorio.',
             'nit.required' => 'El NIT es obligatorio.',
-            'nit.unique' => 'Este NIT ya está registrado.',
             'telefono.required' => 'El teléfono es obligatorio.',
             'email.required' => 'El correo electrónico es obligatorio.',
             'email.email' => 'Ingrese un correo electrónico válido.',
-            'email.unique' => 'Este correo ya está registrado.',
             'direccion.required' => 'La dirección es obligatoria.',
         ];
     }

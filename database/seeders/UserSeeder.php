@@ -14,16 +14,34 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $adminRole = Role::query()->where('name', Role::Admin)->firstOrFail();
-
-        User::query()->updateOrCreate(
-            ['email' => 'admin@ascorp.test'],
+        collect([
             [
                 'name' => 'Administrador ASCORP',
-                'password' => Hash::make('password'),
-                'role_id' => $adminRole->id,
-                'email_verified_at' => now(),
-            ]
-        );
+                'email' => 'admin@ascorp.test',
+                'role' => Role::Admin,
+            ],
+            [
+                'name' => 'Vendedor MaxCar',
+                'email' => 'vendedor@ascorp.test',
+                'role' => Role::Seller,
+            ],
+            [
+                'name' => 'Bodeguero MaxCar',
+                'email' => 'bodeguero@ascorp.test',
+                'role' => Role::Warehouse,
+            ],
+        ])->each(function (array $user): void {
+            $role = Role::query()->where('name', $user['role'])->firstOrFail();
+
+            User::query()->updateOrCreate(
+                ['email' => $user['email']],
+                [
+                    'name' => $user['name'],
+                    'password' => Hash::make('password'),
+                    'role_id' => $role->id,
+                    'email_verified_at' => now(),
+                ]
+            );
+        });
     }
 }

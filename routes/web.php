@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -29,6 +30,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'title' => 'Panel de bodega',
         'description' => 'Acceso inicial para inventario y productos.',
     ])->middleware('role:Admin,Bodeguero')->name('inventory.dashboard');
+});
+
+Route::middleware(['auth', 'role:Admin'])->group(function () {
+    Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::resource('users', UserController::class);
 });
 
 require __DIR__.'/auth.php';

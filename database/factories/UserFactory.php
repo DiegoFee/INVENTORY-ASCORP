@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            'is_active' => true,
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
@@ -75,6 +76,13 @@ class UserFactory extends Factory
                 ['name' => Role::Warehouse],
                 ['permissions' => ['inventory.access', 'products.access', 'suppliers.access']]
             )->id,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
         ]);
     }
 }

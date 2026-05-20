@@ -15,6 +15,10 @@
             <flux:navlist variant="outline">
                 <flux:navlist.group heading="INVENTORY ASCORP" class="grid">
                     <flux:navlist.item icon="home" :href="route($homeRoute)" :current="request()->routeIs($homeRoute)" wire:navigate>Dashboard</flux:navlist.item>
+
+                    @if (auth()->user()->hasRole(\App\Models\Role::Admin))
+                        <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>Usuarios</flux:navlist.item>
+                    @endif
                 </flux:navlist.group>
             </flux:navlist>
 

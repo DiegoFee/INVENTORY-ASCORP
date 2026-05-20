@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SupplierController; 
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -7,6 +8,8 @@ use Livewire\Volt\Volt;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+Route::resource('suppliers', SupplierController::class)->middleware('auth');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified', 'role:Admin'])

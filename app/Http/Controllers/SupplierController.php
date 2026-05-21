@@ -22,8 +22,8 @@ class SupplierController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'like', "%{$search}%")
-                  ->orWhere('nit', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('nit', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -65,7 +65,7 @@ class SupplierController extends Controller
             $existing->restore();
             $existing->update($data);
             $message = 'Proveedor restaurado y actualizado correctamente.';
-        } elseif ($existing && !$existing->trashed()) {
+        } elseif ($existing && ! $existing->trashed()) {
             // No debería ocurrir por la validación, pero por seguridad:
             return redirect()->back()->withInput()->withErrors(['nit' => 'El NIT ya está en uso por un proveedor activo.']);
         } else {
@@ -99,6 +99,7 @@ class SupplierController extends Controller
     public function update(SupplierRequest $request, Supplier $supplier): RedirectResponse
     {
         $supplier->update($request->validated());
+
         return redirect()->route('suppliers.index')->with('success', 'Proveedor actualizado correctamente.');
     }
 
@@ -108,6 +109,7 @@ class SupplierController extends Controller
     public function destroy(Supplier $supplier): RedirectResponse
     {
         $supplier->delete();
+
         return redirect()->route('suppliers.index')->with('success', 'Proveedor eliminado correctamente.');
     }
 }

@@ -23,7 +23,7 @@ test('admin can create purchase', function () {
 
     $payload = [
         'proveedor_id' => $supplier->id,
-        'estado' => Compra::EstadoBorrador,
+        'estado' => 'borrador',
         'fecha_compra' => now()->toDateString(),
         'observaciones' => 'Compra inicial',
         'detalles' => [

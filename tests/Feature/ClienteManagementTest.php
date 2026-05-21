@@ -56,7 +56,7 @@ test('admin can update client', function () {
 
     $this->actingAs($admin);
 
-    Volt::test('clientes.edit', ['cliente' => $cliente->id])
+    Volt::test('clientes.edit', ['cliente' => $cliente])
         ->set('nombre', 'Cliente Actualizado')
         ->call('update')
         ->assertRedirect(route('clientes.index'));

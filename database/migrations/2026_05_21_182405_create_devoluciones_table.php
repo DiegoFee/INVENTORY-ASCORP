@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('devoluciones', function (Blueprint $table) {
             $table->id();
-                        $table->foreignId('venta_id')
+            $table->foreignId('venta_id')
                 ->constrained('ventas')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();

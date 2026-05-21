@@ -4,8 +4,12 @@ namespace App\Services;
 
 use App\Models\Compra;
 use App\Models\DetalleCompra;
+use App\Models\DetalleDevolucion;
+use App\Models\DetalleVenta;
+use App\Models\Devolucion;
 use App\Models\MovimientoInventario;
 use App\Models\Producto;
+use App\Models\Venta;
 use App\Repositories\MovimientoInventarioRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -20,9 +24,6 @@ class InventoryMovementService
         private readonly StockCalculationService $stockService
     ) {}
 
-    /**
-     * // Autor: Diego Méndez - Fecha: 21/05/2026
-     */
     public function registerEntrada(array $data): MovimientoInventario
     {
         return $this->registerMovement(
@@ -33,13 +34,10 @@ class InventoryMovementService
             costoUnitario: $data['costo_unitario'] ?? null,
             compraId: null,
             userId: $data['user_id'] ?? null,
-            observaciones: $data['observaciones'] ?? null
+            observaciones: $data['observaciones'] ?? null,
         );
     }
 
-    /**
-     * // Autor: Diego Méndez - Fecha: 21/05/2026
-     */
     public function registerSalida(array $data): MovimientoInventario
     {
         return $this->registerMovement(
@@ -50,13 +48,10 @@ class InventoryMovementService
             costoUnitario: $data['costo_unitario'] ?? null,
             compraId: null,
             userId: $data['user_id'] ?? null,
-            observaciones: $data['observaciones'] ?? null
+            observaciones: $data['observaciones'] ?? null,
         );
     }
 
-    /**
-     * // Autor: Diego Méndez - Fecha: 21/05/2026
-     */
     public function registerEntradaFromCompra(Compra $compra, DetalleCompra $detalle, ?int $userId = null): MovimientoInventario
     {
         return $this->registerMovement(
@@ -67,7 +62,35 @@ class InventoryMovementService
             costoUnitario: (float) $detalle->precio_costo,
             compraId: $compra->getKey(),
             userId: $userId,
-            observaciones: 'Ingreso por compra '.$compra->codigo
+            observaciones: 'Ingreso por compra '.$compra->codigo,
+        );
+    }
+
+    public function registerSalidaFromVenta(Venta $venta, DetalleVenta $detalle, ?int $userId = null): MovimientoInventario
+    {
+        return $this->registerMovement(
+            productoId: $detalle->producto_id,
+            cantidad: $detalle->cantidad,
+            tipo: MovimientoInventario::TipoSalida,
+            origen: MovimientoInventario::OrigenVenta,
+            costoUnitario: (float) $detalle->precio_unitario,
+            compraId: null,
+            userId: $userId,
+            observaciones: 'Salida por venta #'.$venta->getKey(),
+        );
+    }
+
+    public function registerEntradaFromDevolucion(Devolucion $devolucion, DetalleDevolucion $detalle, ?int $userId = null): MovimientoInventario
+    {
+        return $this->registerMovement(
+            productoId: $detalle->producto_id,
+            cantidad: $detalle->cantidad,
+            tipo: MovimientoInventario::TipoEntrada,
+            origen: MovimientoInventario::OrigenDevolucion,
+            costoUnitario: (float) $detalle->precio_unitario,
+            compraId: null,
+            userId: $userId,
+            observaciones: 'Ingreso por devolución #'.$devolucion->getKey(),
         );
     }
 
@@ -79,7 +102,7 @@ class InventoryMovementService
         ?float $costoUnitario,
         ?int $compraId,
         ?int $userId,
-        ?string $observaciones
+        ?string $observaciones,
     ): MovimientoInventario {
         return DB::transaction(function () use ($productoId, $cantidad, $tipo, $origen, $costoUnitario, $compraId, $userId, $observaciones): MovimientoInventario {
             if ($cantidad <= 0) {

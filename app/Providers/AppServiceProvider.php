@@ -6,10 +6,14 @@ use App\Models\Producto;
 use App\Observers\ProductoObserver;
 use App\Repositories\CompraRepository;
 use App\Repositories\CompraRepositoryInterface;
+use App\Repositories\DevolucionRepository;
+use App\Repositories\DevolucionRepositoryInterface;
 use App\Repositories\MovimientoInventarioRepository;
 use App\Repositories\MovimientoInventarioRepositoryInterface;
 use App\Repositories\ProductoRepository;
 use App\Repositories\ProductoRepositoryInterface;
+use App\Repositories\VentaRepository;
+use App\Repositories\VentaRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -25,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CompraRepositoryInterface::class, CompraRepository::class);
         $this->app->bind(MovimientoInventarioRepositoryInterface::class, MovimientoInventarioRepository::class);
         $this->app->bind(ProductoRepositoryInterface::class, ProductoRepository::class);
+        $this->app->bind(VentaRepositoryInterface::class, VentaRepository::class);
+        $this->app->bind(DevolucionRepositoryInterface::class, DevolucionRepository::class);
     }
 
     /**

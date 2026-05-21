@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
@@ -47,6 +48,10 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {
+    Route::get('inventario', [InventarioController::class, 'index'])->name('inventario.index');
+    Route::get('inventario/entrada', [InventarioController::class, 'entrada'])->name('inventario.entrada');
+    Route::get('inventario/salida', [InventarioController::class, 'salida'])->name('inventario.salida');
+    Route::get('inventario/kardex/{producto}', [InventarioController::class, 'kardex'])->name('inventario.kardex');
     Route::resource('compras', CompraController::class);
     Route::patch('compras/{compra}/receive', [CompraController::class, 'receive'])->name('compras.receive');
     Route::resource('productos', ProductoController::class);

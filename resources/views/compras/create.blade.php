@@ -1,0 +1,14 @@
+<x-layouts.app>
+    <div class="flex h-full w-full flex-1 flex-col gap-6 p-4 lg:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">Nueva compra</h1>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">Registra una compra y sus productos.</p>
+            </div>
+
+            <a href="{{ route('compras.index') }}" class="text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white">Volver</a>
+        </div>
+
+        <livewire:compras.form />
+    </div>
+</x-layouts.app>

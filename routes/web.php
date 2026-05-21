@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\SupplierController; 
+use App\Http\Controllers\CompraController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -42,6 +44,12 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Volt::route('clientes', 'clientes.index')->name('clientes.index');
     Volt::route('clientes/create', 'clientes.create')->name('clientes.create');
     Volt::route('clientes/{cliente}/edit', 'clientes.edit')->name('clientes.edit');
+});
+
+Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {
+    Route::resource('compras', CompraController::class);
+    Route::patch('compras/{compra}/receive', [CompraController::class, 'receive'])->name('compras.receive');
+    Route::resource('productos', ProductoController::class);
 });
 
 require __DIR__.'/auth.php';

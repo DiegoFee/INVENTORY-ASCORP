@@ -20,6 +20,10 @@
                         <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>Usuarios</flux:navlist.item>
                         <flux:navlist.item icon="users" :href="route('clientes.index')" :current="request()->routeIs('clientes.*')" wire:navigate>Clientes</flux:navlist.item>
                     @endif
+
+                    @if (auth()->user()->hasRole(\App\Models\Role::Admin, \App\Models\Role::Warehouse))
+                        <flux:navlist.item icon="folder-git-2" :href="route('productos.index')" :current="request()->routeIs('productos.*')" wire:navigate>Productos</flux:navlist.item>
+                    @endif
                 </flux:navlist.group>
             </flux:navlist>
 

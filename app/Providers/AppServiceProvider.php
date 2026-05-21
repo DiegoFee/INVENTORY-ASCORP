@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Producto;
 use App\Observers\ProductoObserver;
+use App\Repositories\CompraRepository;
+use App\Repositories\CompraRepositoryInterface;
 use App\Repositories\ProductoRepository;
 use App\Repositories\ProductoRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(CompraRepositoryInterface::class, CompraRepository::class);
         $this->app->bind(ProductoRepositoryInterface::class, ProductoRepository::class);
     }
 

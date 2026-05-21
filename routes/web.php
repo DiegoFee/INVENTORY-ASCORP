@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CompraController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
@@ -46,6 +47,8 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {
+    Route::resource('compras', CompraController::class);
+    Route::patch('compras/{compra}/receive', [CompraController::class, 'receive'])->name('compras.receive');
     Route::resource('productos', ProductoController::class);
 });
 

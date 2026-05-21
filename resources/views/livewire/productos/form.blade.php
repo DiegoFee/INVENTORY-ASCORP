@@ -20,11 +20,11 @@ new class extends Component {
 
 <form
     method="POST"
-    action="{{ $producto ? route('productos.update', $producto) : route('productos.store') }}"
+    action="{{ $producto && $producto->exists ? route('productos.update', $producto) : route('productos.store') }}"
     class="max-w-4xl space-y-6"
 >
     @csrf
-    @if ($producto)
+    @if ($producto && $producto->exists)
         @method('PUT')
     @endif
 
@@ -155,7 +155,7 @@ new class extends Component {
             type="submit"
             class="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-            {{ $producto ? 'Actualizar' : 'Guardar' }}
+            {{ $producto && $producto->exists ? 'Actualizar' : 'Guardar' }}
         </button>
         <a
             href="{{ route('productos.index') }}"

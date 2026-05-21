@@ -68,6 +68,14 @@ class Producto extends Model
     }
 
     /**
+     * // Autor: Diego Méndez - Fecha: 21/05/2026
+     */
+    public function detallesDevolucion(): HasMany
+    {
+        return $this->hasMany(DetalleDevolucion::class);
+    }
+
+    /**
      * // Autor: Diego Méndez - Fecha: 20/05/2026
      */
     public function scopeLowStock(Builder $query): Builder

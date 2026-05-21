@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CompraEstadoEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,11 +16,11 @@ class Compra extends Model
 {
     use HasFactory, SoftDeletes;
 
-    public const EstadoBorrador = 'borrador';
+    public const EstadoBorrador = CompraEstadoEnum::BORRADOR;
 
-    public const EstadoConfirmada = 'confirmada';
+    public const EstadoConfirmada = CompraEstadoEnum::CONFIRMADA;
 
-    public const EstadoRecibida = 'recibida';
+    public const EstadoRecibida = CompraEstadoEnum::RECIBIDA;
 
     protected $table = 'compras';
 
@@ -36,6 +37,7 @@ class Compra extends Model
     protected function casts(): array
     {
         return [
+            'estado' => CompraEstadoEnum::class,
             'fecha_compra' => 'date',
             'fecha_recepcion' => 'datetime',
             'total' => 'decimal:2',

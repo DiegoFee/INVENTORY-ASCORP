@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\MovimientoInventarioOrigenEnum;
+use App\Enums\MovimientoInventarioTipoEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +25,10 @@ class MovimientoInventario extends Model
 
     public const OrigenSalida = 'salida';
 
+    public const OrigenVenta = 'venta';
+
+    public const OrigenDevolucion = 'devolucion';
+
     protected $table = 'movimientos_inventario';
 
     protected $fillable = [
@@ -41,6 +47,8 @@ class MovimientoInventario extends Model
     protected function casts(): array
     {
         return [
+            'tipo' => MovimientoInventarioTipoEnum::class,
+            'origen' => MovimientoInventarioOrigenEnum::class,
             'cantidad' => 'integer',
             'stock_anterior' => 'integer',
             'stock_nuevo' => 'integer',

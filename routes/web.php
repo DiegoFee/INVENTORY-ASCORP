@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -45,6 +47,17 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Volt::route('clientes', 'clientes.index')->name('clientes.index');
     Volt::route('clientes/create', 'clientes.create')->name('clientes.create');
     Volt::route('clientes/{cliente}/edit', 'clientes.edit')->name('clientes.edit');
+});
+
+Route::middleware(['auth', 'role:Admin,Vendedor'])->group(function () {
+    Route::resource('ventas', VentaController::class)->only(['index', 'show', 'store', 'update', 'destroy', 'create', 'edit']);
+    Route::patch('ventas/{venta}/close', [VentaController::class, 'close'])->name('ventas.close');
+});
+
+Route::middleware(['auth', 'role:Admin,Vendedor'])->group(function () {
+    Route::resource('devoluciones', DevolucionController::class)->only(['index', 'show', 'store']);
+    Route::patch('devoluciones/{devolucion}/approve', [DevolucionController::class, 'approve'])->name('devoluciones.approve');
+    Route::patch('devoluciones/{devolucion}/reject', [DevolucionController::class, 'reject'])->name('devoluciones.reject');
 });
 
 Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {

@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\Role;
+use App\Models\User;
+use App\Models\Venta;
+
+class VentaPolicy
+{
+    public function viewAny(User $user): bool
+    {
+        return $user->hasRole(Role::Admin, Role::Seller);
+    }
+
+    public function view(User $user, Venta $venta): bool
+    {
+        return $user->hasRole(Role::Admin, Role::Seller);
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->hasRole(Role::Admin, Role::Seller);
+    }
+
+    public function update(User $user, Venta $venta): bool
+    {
+        return $user->hasRole(Role::Admin, Role::Seller);
+    }
+
+    public function delete(User $user, Venta $venta): bool
+    {
+        return $user->hasRole(Role::Admin);
+    }
+
+    public function close(User $user, Venta $venta): bool
+    {
+        return $user->hasRole(Role::Admin, Role::Seller);
+    }
+}

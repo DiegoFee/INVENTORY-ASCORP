@@ -24,7 +24,7 @@ class Supplier extends Model
         'telefono',
         'email',
         'direccion',
-        'contacto_nombre'
+        'contacto_nombre',
     ];
 
     /**
@@ -47,8 +47,8 @@ class Supplier extends Model
     public function scopeSearch($query, $term)
     {
         return $query->where('nombre', 'LIKE', "%{$term}%")
-                     ->orWhere('nit', 'LIKE', "%{$term}%")
-                     ->orWhere('email', 'LIKE', "%{$term}%");
+            ->orWhere('nit', 'LIKE', "%{$term}%")
+            ->orWhere('email', 'LIKE', "%{$term}%");
     }
 
     // Relaciones futuras (comentadas hasta que exista el modelo Compra)

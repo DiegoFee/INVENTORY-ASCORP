@@ -16,7 +16,7 @@ class CompraService
 {
     public function __construct(
         private readonly CompraRepositoryInterface $compras,
-        private readonly StockCalculationService $stockService
+        private readonly InventoryMovementService $inventoryService
     ) {}
 
     /**
@@ -101,7 +101,7 @@ class CompraService
             }
 
             foreach ($compraConDetalles->detalles as $detalle) {
-                $this->stockService->increaseStock($detalle->producto, $detalle->cantidad);
+                $this->inventoryService->registerEntradaFromCompra($compraConDetalles, $detalle);
             }
 
             return $this->compras->updateStatus(

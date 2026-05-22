@@ -23,7 +23,7 @@ class DevolucionRepository implements DevolucionRepositoryInterface
 
     public function findWithRelations(Devolucion $devolucion): Devolucion
     {
-        return $devolucion->load(['venta', 'usuario', 'detalles']);
+        return $devolucion->load(['venta', 'usuario', 'detalles.producto']);
     }
 
     public function create(array $data, array $detalles): Devolucion

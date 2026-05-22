@@ -14,6 +14,6 @@
                 </a>
             </div>
         </div>
-        <livewire:devoluciones.show :devolucion="$devolucion" />
+        @livewire('devoluciones.show', ['devolucionId' => $devolucion->id])
     </div>
 </x-layouts.app>

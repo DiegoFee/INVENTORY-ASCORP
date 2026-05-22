@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Caja;
 use App\Models\Venta;
 use App\Repositories\VentaRepositoryInterface;
 use Illuminate\Support\Arr;
@@ -22,7 +23,10 @@ class VentaService
             $descuentoGlobal = (float) ($data['descuento'] ?? 0);
             $total = max(0, $this->calcularTotal($detalleNormalizado) - $descuentoGlobal);
 
+            $caja = $this->resolveCajaParaUsuario((int) ($data['user_id'] ?? 0));
+
             $payload = array_merge($this->filtrarVentaData($data), [
+                'caja_id' => $caja->id,
                 'total' => $total,
                 'estado' => $data['estado'] ?? Venta::EstadoBorrador,
                 'opened_at' => $data['opened_at'] ?? now()->toDateTimeString(),
@@ -98,7 +102,32 @@ class VentaService
 
     private function filtrarVentaData(array $data): array
     {
-        return Arr::only($data, ['caja_id', 'user_id', 'cliente_id', 'descuento', 'observaciones']);
+        return Arr::only($data, ['user_id', 'cliente_id', 'descuento', 'observaciones']);
+    }
+
+    private function resolveCajaParaUsuario(int $userId): Caja
+    {
+        if ($userId < 1) {
+            throw ValidationException::withMessages([
+                'user_id' => 'Usuario no autenticado para resolver caja.',
+            ]);
+        }
+
+        $caja = Caja::query()
+            ->where('user_id_open', $userId)
+            ->whereNull('closed_at')
+            ->first();
+
+        if ($caja !== null) {
+            return $caja;
+        }
+
+        return Caja::query()->create([
+            'user_id_open' => $userId,
+            'opened_at' => now()->toDateTimeString(),
+            'saldo_apertura' => 0,
+            'status' => 'open',
+        ]);
     }
 
     private function normalizarDetalles(array $detalles): array

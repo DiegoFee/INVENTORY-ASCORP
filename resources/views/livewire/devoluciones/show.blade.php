@@ -5,11 +5,21 @@ use App\Services\DevolucionService;
 use Livewire\Volt\Component;
 
 new class extends Component {
+    public ?int $devolucionId = null;
+
     public Devolucion $devolucion;
 
-    public function mount(Devolucion $devolucion): void
+    public function mount(): void
     {
-        $this->devolucion = $devolucion->load(['venta', 'usuario', 'detalles.producto']);
+        $this->loadDevolucion();
+    }
+
+    public function loadDevolucion(): void
+    {
+        $id = $this->devolucionId ?? request()->route('devolucione');
+
+        $this->devolucion = Devolucion::with('detalles.producto')
+            ->findOrFail($id);
     }
 
     public function approve(DevolucionService $service): void

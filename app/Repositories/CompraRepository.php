@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\CompraEstadoEnum;
 use App\Models\Compra;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -71,7 +72,7 @@ class CompraRepository implements CompraRepositoryInterface
     /**
      * // Autor: Diego Méndez - Fecha: 21/05/2026
      */
-    public function updateStatus(Compra $compra, string|\App\Enums\CompraEstadoEnum $estado, ?string $fechaRecepcion = null): Compra
+    public function updateStatus(Compra $compra, string|CompraEstadoEnum $estado, ?string $fechaRecepcion = null): Compra
     {
         $compra->update([
             'estado' => $estado,

@@ -5,6 +5,9 @@
                 <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">Devoluciones</h1>
                 <p class="text-sm text-zinc-600 dark:text-zinc-400">Gestión de devoluciones de ventas.</p>
             </div>
+            <flux:button href="{{ route('devoluciones.create') }}" wire:navigate class="px-3 py-1.5 text-xs">
+                Crear devolución
+            </flux:button>
         </div>
         @if (session('success'))
             <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">

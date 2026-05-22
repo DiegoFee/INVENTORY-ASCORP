@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role:Admin,Vendedor'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:Admin,Vendedor'])->group(function () {
+    Volt::route('devoluciones/create', 'devoluciones.create')->name('devoluciones.create');
     Route::resource('devoluciones', DevolucionController::class)->only(['index', 'show', 'store']);
     Route::patch('devoluciones/{devolucion}/approve', [DevolucionController::class, 'approve'])->name('devoluciones.approve');
     Route::patch('devoluciones/{devolucion}/reject', [DevolucionController::class, 'reject'])->name('devoluciones.reject');

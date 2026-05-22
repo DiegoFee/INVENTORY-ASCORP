@@ -1,17 +1,16 @@
 <?php
 
-use App\Models\Caja;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\VentaService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 
 new class extends Component {
     public ?Venta $venta = null;
-    public ?int $caja_id = null;
     public ?int $cliente_id = null;
     public string $estado = Venta::EstadoBorrador;
     public ?string $descuento = '0';
@@ -23,7 +22,6 @@ new class extends Component {
         $this->venta = $venta && $venta->exists ? $venta->load('detalles') : null;
 
         if ($this->venta) {
-            $this->caja_id = $this->venta->caja_id;
             $this->cliente_id = $this->venta->cliente_id;
             $this->estado = $this->venta->estado ?: Venta::EstadoBorrador;
             $this->descuento = (string) ($this->venta->descuento ?: 0);
@@ -37,15 +35,8 @@ new class extends Component {
                 ];
             })->toArray();
         } else {
-            $cajaAbierta = Caja::query()->whereNull('closed_at')->first();
-            $this->caja_id = $cajaAbierta?->id;
             $this->detalles = [$this->detalleVacio()];
         }
-    }
-
-    public function getCajasProperty(): Collection
-    {
-        return Caja::query()->whereNull('closed_at')->orderByDesc('id')->get();
     }
 
     public function getClientesProperty(): Collection
@@ -72,6 +63,50 @@ new class extends Component {
         return max(0, $subtotal - $descuentoGlobal);
     }
 
+    public function cargarPrecio(int $index): void
+    {
+        $productoId = $this->detalles[$index]['producto_id'] ?? null;
+
+        if ($productoId === null) {
+            return;
+        }
+
+        $producto = Producto::find((int) $productoId);
+
+        if ($producto !== null) {
+            $this->detalles[$index]['precio_unitario'] = (float) $producto->precio_venta;
+        }
+    }
+
+    public function updatedDetalles(mixed $value, mixed $key): void
+    {
+        if (! is_string($key)) {
+            return;
+        }
+
+        $parts = explode('.', $key);
+
+        if (count($parts) < 2) {
+            return;
+        }
+
+        [$index, $field] = $parts;
+
+        if (in_array($field, ['cantidad', 'producto_id', 'descuento'], true)) {
+            $this->subtotalLine((int) $index);
+        }
+    }
+
+    public function subtotalLine(int $index): float
+    {
+        $detalle = $this->detalles[$index] ?? [];
+        $cantidad = max(0, (int) ($detalle['cantidad'] ?? 0));
+        $precio = max(0, (float) ($detalle['precio_unitario'] ?? 0));
+        $desc = max(0, (float) ($detalle['descuento'] ?? 0));
+
+        return max(0, $cantidad * $precio - $desc);
+    }
+
     public function addDetalle(): void
     {
         $this->detalles[] = $this->detalleVacio();
@@ -86,6 +121,7 @@ new class extends Component {
     public function save(VentaService $service): void
     {
         $validated = $this->validate();
+        $validated['user_id'] = Auth::id();
 
         $venta = $service->createVenta($validated, $validated['detalles']);
 
@@ -104,7 +140,6 @@ new class extends Component {
     protected function rules(): array
     {
         return [
-            'caja_id' => ['required', 'integer', 'exists:cajas,id'],
             'cliente_id' => ['nullable', 'integer', 'exists:clientes,id'],
             'estado' => ['required', 'string', Rule::in([Venta::EstadoBorrador, Venta::EstadoConfirmada])],
             'descuento' => ['nullable', 'numeric', 'min:0'],
@@ -130,21 +165,6 @@ new class extends Component {
 
 <form wire:submit="{{ $venta && $venta->exists ? 'update' : 'save' }}" class="max-w-5xl space-y-6">
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div class="grid gap-2">
-            <label class="text-sm font-medium text-zinc-800 dark:text-zinc-200" for="caja_id">Caja</label>
-            <select
-                id="caja_id"
-                wire:model="caja_id"
-                class="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-            >
-                <option value="">Seleccionar caja</option>
-                @foreach ($this->cajas as $caja)
-                    <option value="{{ $caja->id }}">Caja #{{ $caja->id }} ({{ $caja->saldo_apertura }})</option>
-                @endforeach
-            </select>
-            @error('caja_id') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-        </div>
-
         <div class="grid gap-2">
             <label class="text-sm font-medium text-zinc-800 dark:text-zinc-200" for="cliente_id">Cliente</label>
             <select
@@ -215,8 +235,9 @@ new class extends Component {
                         <tr>
                             <th class="px-4 py-3">Producto</th>
                             <th class="px-4 py-3">Cantidad</th>
-                            <th class="px-4 py-3">Precio unitario</th>
-                            <th class="px-4 py-3">Dcto linea</th>
+                            <th class="px-4 py-3">Precio U.</th>
+                            <th class="px-4 py-3">Subtotal</th>
+                            <th class="px-4 py-3">Dcto línea</th>
                             <th class="px-4 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>
@@ -226,6 +247,7 @@ new class extends Component {
                                 <td class="px-4 py-3">
                                     <select
                                         wire:model="detalles.{{ $index }}.producto_id"
+                                        wire:change="cargarPrecio({{ $index }})"
                                         class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                                     >
                                         <option value="">Seleccionar</option>
@@ -239,27 +261,27 @@ new class extends Component {
                                     <input
                                         type="number"
                                         min="1"
-                                        wire:model="detalles.{{ $index }}.cantidad"
+                                        wire:model.live="detalles.{{ $index }}.cantidad"
                                         class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                                     >
                                     @error('detalles.'.$index.'.cantidad') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                                 </td>
                                 <td class="px-4 py-3">
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        wire:model="detalles.{{ $index }}.precio_unitario"
-                                        class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                                    >
-                                    @error('detalles.'.$index.'.precio_unitario') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                    <span class="text-sm text-zinc-800 dark:text-zinc-100">
+                                        {{ number_format(max(0, (float) ($detalle['precio_unitario'] ?? 0)), 2) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                                        {{ number_format($this->subtotalLine($index), 2) }}
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <input
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        wire:model="detalles.{{ $index }}.descuento"
+                                        wire:model.live="detalles.{{ $index }}.descuento"
                                         class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                                     >
                                 </td>
@@ -278,9 +300,8 @@ new class extends Component {
 
     <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
         <div class="text-sm text-zinc-600 dark:text-zinc-400">
-            Subtotal: {{ number_format(collect($detalles)->sum(fn($d) => max(0,(int)($d['cantidad']??0)) * max(0,(float)($d['precio_unitario']??0)) - max(0,(float)($d['descuento']??0))), 2) }}
             @if ((float)($descuento ?? 0) > 0)
-                <span class="ml-2">Dcto global: -{{ number_format((float)$descuento, 2) }}</span>
+                <span>Dcto global: -{{ number_format((float)$descuento, 2) }}</span>
             @endif
         </div>
         <div class="text-lg font-bold text-zinc-900 dark:text-white">

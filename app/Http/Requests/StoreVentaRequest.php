@@ -18,7 +18,6 @@ class StoreVentaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'caja_id' => ['required', 'integer', 'exists:cajas,id'],
             'cliente_id' => ['nullable', 'integer', 'exists:clientes,id'],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'estado' => ['nullable', 'string', Rule::in([Venta::EstadoBorrador, Venta::EstadoConfirmada])],

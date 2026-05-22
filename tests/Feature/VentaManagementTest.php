@@ -43,7 +43,7 @@ test('admin can create sale via http post', function () {
 });
 
 // Autor: Sistema - Fecha: 21/05/2026
-// Descripcion: Crea una venta via Livewire Volt con precio auto-cargado.
+// Descripcion: Crea una venta via Livewire Volt con carrito asociativo.
 test('admin can create sale via livewire with auto price', function () {
     $admin = User::factory()->admin()->create();
     $producto = Producto::factory()->create([
@@ -55,10 +55,14 @@ test('admin can create sale via livewire with auto price', function () {
     Volt::test('ventas.form')
         ->set('estado', Venta::EstadoBorrador)
         ->set('descuento', '10')
-        ->set('detalles.0.producto_id', (string) $producto->id)
-        ->call('cargarPrecio', 0)
-        ->set('detalles.0.cantidad', '2')
-        ->set('detalles.0.descuento', '0')
+        ->set('cart', [
+            $producto->id => [
+                'id' => $producto->id,
+                'name' => $producto->nombre,
+                'price' => (float) $producto->precio_venta,
+                'qty' => 2,
+            ],
+        ])
         ->call('save')
         ->assertRedirect();
 
@@ -73,8 +77,8 @@ test('admin can create sale via livewire with auto price', function () {
 });
 
 // Autor: Sistema - Fecha: 21/05/2026
-// Descripcion: Verifica que el precio se carga automaticamente al seleccionar producto.
-test('precio_unitario is auto-loaded when product is selected', function () {
+// Descripcion: Verifica que addProduct() carga precio y nombre del producto.
+test('addProduct sets price and name from producto', function () {
     $admin = User::factory()->admin()->create();
     $producto = Producto::factory()->create([
         'precio_venta' => 75.50,
@@ -83,12 +87,31 @@ test('precio_unitario is auto-loaded when product is selected', function () {
     $this->actingAs($admin);
 
     $component = Volt::test('ventas.form')
-        ->set('detalles.0.producto_id', (string) $producto->id)
-        ->call('cargarPrecio', 0);
+        ->call('addProduct', $producto->id);
 
-    $detalles = $component->get('detalles');
+    $cart = $component->get('cart');
 
-    expect((float) ($detalles[0]['precio_unitario'] ?? 0))->toBe(75.50);
+    expect($cart)->toHaveKey($producto->id)
+        ->and((float) ($cart[$producto->id]['price'] ?? 0))->toBe(75.50)
+        ->and($cart[$producto->id]['name'])->toBe($producto->nombre)
+        ->and((int) ($cart[$producto->id]['qty'] ?? 0))->toBe(1);
+});
+
+// Autor: Sistema - Fecha: 21/05/2026
+// Descripcion: addProduct incrementa qty si el producto ya existe en carrito.
+test('addProduct increments quantity when product already in cart', function () {
+    $admin = User::factory()->admin()->create();
+    $producto = Producto::factory()->create();
+
+    $this->actingAs($admin);
+
+    $component = Volt::test('ventas.form')
+        ->call('addProduct', $producto->id)
+        ->call('addProduct', $producto->id);
+
+    $cart = $component->get('cart');
+
+    expect((int) ($cart[$producto->id]['qty'] ?? 0))->toBe(2);
 });
 
 // Autor: Sistema - Fecha: 21/05/2026
@@ -100,9 +123,14 @@ test('sale always gets a valid caja_id', function () {
     $this->actingAs($admin);
 
     Volt::test('ventas.form')
-        ->set('detalles.0.producto_id', (string) $producto->id)
-        ->call('cargarPrecio', 0)
-        ->set('detalles.0.cantidad', '1')
+        ->set('cart', [
+            $producto->id => [
+                'id' => $producto->id,
+                'name' => $producto->nombre,
+                'price' => (float) $producto->precio_venta,
+                'qty' => 1,
+            ],
+        ])
         ->call('save')
         ->assertRedirect();
 

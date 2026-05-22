@@ -7,6 +7,7 @@ use App\Services\VentaService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -15,28 +16,31 @@ new class extends Component {
     public string $estado = Venta::EstadoBorrador;
     public ?string $descuento = '0';
     public ?string $observaciones = null;
-    public array $detalles = [];
+    public array $cart = [];
+    public float $subtotal = 0;
+    public float $total = 0;
 
     public function mount(?Venta $venta = null): void
     {
-        $this->venta = $venta && $venta->exists ? $venta->load('detalles') : null;
+        $this->venta = $venta && $venta->exists ? $venta->load('detalles.producto') : null;
 
         if ($this->venta) {
             $this->cliente_id = $this->venta->cliente_id;
             $this->estado = $this->venta->estado ?: Venta::EstadoBorrador;
             $this->descuento = (string) ($this->venta->descuento ?: 0);
             $this->observaciones = $this->venta->observaciones;
-            $this->detalles = $this->venta->detalles->map(function ($detalle): array {
-                return [
-                    'producto_id' => $detalle->producto_id,
-                    'cantidad' => $detalle->cantidad,
-                    'precio_unitario' => $detalle->precio_unitario,
-                    'descuento' => $detalle->descuento,
+
+            foreach ($this->venta->detalles as $detalle) {
+                $this->cart[$detalle->producto_id] = [
+                    'id' => $detalle->producto_id,
+                    'name' => $detalle->producto?->nombre ?? '',
+                    'price' => (float) $detalle->precio_unitario,
+                    'qty' => $detalle->cantidad,
                 ];
-            })->toArray();
-        } else {
-            $this->detalles = [$this->detalleVacio()];
+            }
         }
+
+        $this->recalculateTotals();
     }
 
     public function getClientesProperty(): Collection
@@ -44,95 +48,92 @@ new class extends Component {
         return Cliente::query()->orderBy('nombre')->get();
     }
 
-    public function getProductosProperty(): Collection
+    public function addProduct(int $productId): void
     {
-        return Producto::query()->active()->orderBy('nombre')->get();
+        $producto = Producto::findOrFail($productId);
+
+        if (isset($this->cart[$productId])) {
+            $this->cart[$productId]['qty']++;
+        } else {
+            $this->cart[$productId] = [
+                'id' => $producto->id,
+                'name' => $producto->nombre,
+                'price' => (float) $producto->precio_venta,
+                'qty' => 1,
+            ];
+        }
+
+        $this->recalculateTotals();
     }
 
-    public function getTotalProperty(): float
+    #[On('productSelected')]
+    public function addProductFromSelector(int $productId): void
     {
-        $subtotal = collect($this->detalles)->sum(function (array $detalle): float {
-            $cantidad = max(0, (int) ($detalle['cantidad'] ?? 0));
-            $precio = max(0, (float) ($detalle['precio_unitario'] ?? 0));
-            $desc = max(0, (float) ($detalle['descuento'] ?? 0));
-            return $cantidad * $precio - $desc;
-        });
+        $this->addProduct($productId);
+    }
+
+    public function recalculateTotals(): void
+    {
+        $this->subtotal = 0;
+
+        foreach ($this->cart as $item) {
+            $this->subtotal += (float) ($item['price'] ?? 0) * max(0, (int) ($item['qty'] ?? 0));
+        }
 
         $descuentoGlobal = max(0, (float) ($this->descuento ?? 0));
 
-        return max(0, $subtotal - $descuentoGlobal);
+        $this->total = max(0, $this->subtotal - $descuentoGlobal);
     }
 
-    public function cargarPrecio(int $index): void
+    public function updatedCart(): void
     {
-        $productoId = $this->detalles[$index]['producto_id'] ?? null;
-
-        if ($productoId === null) {
-            return;
-        }
-
-        $producto = Producto::find((int) $productoId);
-
-        if ($producto !== null) {
-            $this->detalles[$index]['precio_unitario'] = (float) $producto->precio_venta;
-        }
+        $this->recalculateTotals();
     }
 
-    public function updatedDetalles(mixed $value, mixed $key): void
+    public function removeDetalle(int $productId): void
     {
-        if (! is_string($key)) {
-            return;
-        }
+        unset($this->cart[$productId]);
 
-        $parts = explode('.', $key);
-
-        if (count($parts) < 2) {
-            return;
-        }
-
-        [$index, $field] = $parts;
-
-        if (in_array($field, ['cantidad', 'producto_id', 'descuento'], true)) {
-            $this->subtotalLine((int) $index);
-        }
-    }
-
-    public function subtotalLine(int $index): float
-    {
-        $detalle = $this->detalles[$index] ?? [];
-        $cantidad = max(0, (int) ($detalle['cantidad'] ?? 0));
-        $precio = max(0, (float) ($detalle['precio_unitario'] ?? 0));
-        $desc = max(0, (float) ($detalle['descuento'] ?? 0));
-
-        return max(0, $cantidad * $precio - $desc);
-    }
-
-    public function addDetalle(): void
-    {
-        $this->detalles[] = $this->detalleVacio();
-    }
-
-    public function removeDetalle(int $index): void
-    {
-        unset($this->detalles[$index]);
-        $this->detalles = array_values($this->detalles);
+        $this->recalculateTotals();
     }
 
     public function save(VentaService $service): void
     {
+        $this->recalculateTotals();
+
         $validated = $this->validate();
         $validated['user_id'] = Auth::id();
 
-        $venta = $service->createVenta($validated, $validated['detalles']);
+        $detalles = collect($this->cart)->map(function (array $item): array {
+            return [
+                'producto_id' => (int) ($item['id'] ?? 0),
+                'cantidad' => max(1, (int) ($item['qty'] ?? 0)),
+                'precio_unitario' => max(0, (float) ($item['price'] ?? 0)),
+                'descuento' => 0,
+            ];
+        })->values()->toArray();
+
+        $venta = $service->createVenta($validated, $detalles);
 
         $this->redirectRoute('ventas.show', $venta, navigate: true);
     }
 
     public function update(VentaService $service): void
     {
+        $this->recalculateTotals();
+
         $validated = $this->validate();
 
-        $venta = $service->updateVenta($this->venta, $validated, $validated['detalles']);
+        $detalles = collect($this->cart)->map(function (array $item): array {
+            return [
+                'producto_id' => (int) ($item['id'] ?? 0),
+                'cantidad' => max(1, (int) ($item['qty'] ?? 0)),
+                'precio_unitario' => max(0, (float) ($item['price'] ?? 0)),
+                'descuento' => 0,
+            ];
+        })->values()->toArray();
+
+        $venta = $service->updateVenta($this->venta, $validated, $detalles);
 
         $this->redirectRoute('ventas.show', $venta, navigate: true);
     }
@@ -144,21 +145,10 @@ new class extends Component {
             'estado' => ['required', 'string', Rule::in([Venta::EstadoBorrador, Venta::EstadoConfirmada])],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
-            'detalles' => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'integer', 'exists:productos,id'],
-            'detalles.*.cantidad' => ['required', 'integer', 'min:1'],
-            'detalles.*.precio_unitario' => ['required', 'numeric', 'min:0'],
-            'detalles.*.descuento' => ['nullable', 'numeric', 'min:0'],
-        ];
-    }
-
-    private function detalleVacio(): array
-    {
-        return [
-            'producto_id' => null,
-            'cantidad' => 1,
-            'precio_unitario' => 0,
-            'descuento' => 0,
+            'cart' => ['required', 'array', 'min:1'],
+            'cart.*.id' => ['required', 'integer', 'exists:productos,id'],
+            'cart.*.qty' => ['required', 'integer', 'min:1'],
+            'cart.*.price' => ['required', 'numeric', 'min:0'],
         ];
     }
 }; ?>
@@ -218,84 +208,68 @@ new class extends Component {
         </div>
     </div>
 
+    <livewire:ventas.product-selector />
+
     <div class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Detalle de productos</h3>
-            <flux:button type="button" wire:click="addDetalle" class="px-3 py-1.5 text-xs">
-                Agregar linea
-            </flux:button>
+            <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Carrito de venta</h3>
         </div>
 
-        @error('detalles') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+        @error('cart') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
 
-        <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
-                    <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                        <tr>
-                            <th class="px-4 py-3">Producto</th>
-                            <th class="px-4 py-3">Cantidad</th>
-                            <th class="px-4 py-3">Precio U.</th>
-                            <th class="px-4 py-3">Subtotal</th>
-                            <th class="px-4 py-3">Dcto línea</th>
-                            <th class="px-4 py-3 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                        @foreach ($detalles as $index => $detalle)
-                            <tr wire:key="detalle-{{ $index }}">
-                                <td class="px-4 py-3">
-                                    <select
-                                        wire:model="detalles.{{ $index }}.producto_id"
-                                        wire:change="cargarPrecio({{ $index }})"
-                                        class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                                    >
-                                        <option value="">Seleccionar</option>
-                                        @foreach ($this->productos as $producto)
-                                            <option value="{{ $producto->id }}">{{ $producto->nombre }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('detalles.'.$index.'.producto_id') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        wire:model.live="detalles.{{ $index }}.cantidad"
-                                        class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                                    >
-                                    @error('detalles.'.$index.'.cantidad') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="text-sm text-zinc-800 dark:text-zinc-100">
-                                        {{ number_format(max(0, (float) ($detalle['precio_unitario'] ?? 0)), 2) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                        {{ number_format($this->subtotalLine($index), 2) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        wire:model.live="detalles.{{ $index }}.descuento"
-                                        class="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                                    >
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <flux:button type="button" wire:click="removeDetalle({{ $index }})" class="px-2 py-1 text-xs text-red-700 dark:text-red-300">
-                                        Quitar
-                                    </flux:button>
-                                </td>
+        @if (count($cart) > 0)
+            <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
+                        <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                            <tr>
+                                <th class="px-4 py-3">Producto</th>
+                                <th class="px-4 py-3">Cant.</th>
+                                <th class="px-4 py-3">Precio</th>
+                                <th class="px-4 py-3">Total</th>
+                                <th class="px-4 py-3 text-right">Acciones</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                            @foreach ($cart as $item)
+                                <tr wire:key="cart-{{ $item['id'] }}">
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-zinc-800 dark:text-zinc-100">{{ $item['name'] ?: 'Producto #' . $item['id'] }}</span>
+                                        @error('cart.'.$item['id'].'.id') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            wire:model.live="cart.{{ $item['id'] }}.qty"
+                                            class="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                                        >
+                                        @error('cart.'.$item['id'].'.qty') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-zinc-800 dark:text-zinc-100">
+                                            ${{ number_format(max(0, (float) ($item['price'] ?? 0)), 2) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                                            ${{ number_format(max(0, (float) ($item['price'] ?? 0) * max(0, (int) ($item['qty'] ?? 0))), 2) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <flux:button type="button" wire:click="removeDetalle({{ $item['id'] }})" class="px-2 py-1 text-xs text-red-700 dark:text-red-300">
+                                            Quitar
+                                        </flux:button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        @else
+            <p class="py-4 text-center text-sm text-zinc-400 dark:text-zinc-500">Selecciona productos desde el buscador de arriba</p>
+        @endif
     </div>
 
     <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">

@@ -76,8 +76,8 @@ new class extends Component {
                         <tr class="text-zinc-800 dark:text-zinc-100">
                             <td class="px-4 py-3 font-medium">{{ $movimiento->producto?->nombre ?? 'Producto eliminado' }}</td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $movimiento->tipo === 'entrada' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200' : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-200' }}">
-                                    {{ ucfirst($movimiento->tipo) }}
+                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $movimiento->tipo->value === 'entrada' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200' : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-200' }}">
+                                    {{ ucfirst($movimiento->tipo->value) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $movimiento->cantidad }}</td>

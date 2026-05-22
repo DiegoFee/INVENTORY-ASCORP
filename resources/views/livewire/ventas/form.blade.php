@@ -16,6 +16,7 @@ new class extends Component {
     public string $estado = Venta::EstadoBorrador;
     public ?string $descuento = '0';
     public ?string $observaciones = null;
+    public string $tipo_pago = 'contado'; // Campo para forma de pago
     public array $cart = [];
     public float $subtotal = 0;
     public float $total = 0;
@@ -29,6 +30,8 @@ new class extends Component {
             $this->estado = $this->venta->estado ?: Venta::EstadoBorrador;
             $this->descuento = (string) ($this->venta->descuento ?: 0);
             $this->observaciones = $this->venta->observaciones;
+            // Si guardas tipo_pago en BD, descomenta:
+            // $this->tipo_pago = $this->venta->tipo_pago ?? 'contado';
 
             foreach ($this->venta->detalles as $detalle) {
                 $this->cart[$detalle->producto_id] = [
@@ -145,13 +148,15 @@ new class extends Component {
             'estado' => ['required', 'string', Rule::in([Venta::EstadoBorrador, Venta::EstadoConfirmada])],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
+            'tipo_pago' => ['required', 'string', Rule::in(['contado', 'credito'])],
             'cart' => ['required', 'array', 'min:1'],
             'cart.*.id' => ['required', 'integer', 'exists:productos,id'],
             'cart.*.qty' => ['required', 'integer', 'min:1'],
             'cart.*.price' => ['required', 'numeric', 'min:0'],
         ];
     }
-}; ?>
+};
+?>
 
 <form wire:submit="{{ $venta && $venta->exists ? 'update' : 'save' }}" class="max-w-5xl space-y-6">
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -181,6 +186,20 @@ new class extends Component {
                 <option value="{{ \App\Models\Venta::EstadoConfirmada }}">Confirmada</option>
             </select>
             @error('estado') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+        </div>
+
+        <!-- Campo Forma de pago (nuevo) -->
+        <div class="grid gap-2">
+            <label class="text-sm font-medium text-zinc-800 dark:text-zinc-200" for="tipo_pago">Forma de pago</label>
+            <select
+                id="tipo_pago"
+                wire:model="tipo_pago"
+                class="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+            >
+                <option value="contado">Contado</option>
+                <option value="credito">Crédito</option>
+            </select>
+            @error('tipo_pago') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
         </div>
 
         <div class="grid gap-2">

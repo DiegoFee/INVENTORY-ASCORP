@@ -36,6 +36,7 @@ class Venta extends Model
         'observaciones',
         'opened_at',
         'closed_at',
+        'tipo_pago',
     ];
 
     protected function casts(): array

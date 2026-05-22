@@ -11,18 +11,20 @@
                     <span class="flex h-10 w-10 items-center justify-center rounded-md">
                         <x-app-logo-icon class="mr-2 h-7 fill-current text-white" />
                     </span>
-                    {{ config('app.name', 'Laravel') }}
+                    {{ config('app.name', 'MaxCar') }}
                 </a>
-
-                @php
-                    [$message, $author] = str(Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
-                @endphp
-
                 <div class="relative z-20 mt-auto">
-                    <blockquote class="space-y-2">
-                        <p class="text-lg">&ldquo;{{ trim($message) }}&rdquo;</p>
-                        <footer class="text-sm">{{ trim($author) }}</footer>
-                    </blockquote>
+                    <div class="flex items-center gap-3 text-white">
+                        <img
+                            src="{{ asset('logo/logo-ascorp.png') }}"
+                            alt="ASCORP"
+                            class="h-8 w-8 object-contain"
+                        />
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-neutral-300">Creado por</div>
+                            <div class="text-lg font-semibold">ASCORP</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="w-full lg:p-8">
@@ -32,7 +34,7 @@
                             <x-app-logo-icon class="size-9 fill-current text-black dark:text-white" />
                         </span>
 
-                        <span class="sr-only">{{ config('app.name', 'Laravel') }}</span>
+                        <span class="sr-only">{{ config('app.name', 'MaxCar') }}</span>
                     </a>
                     {{ $slot }}
                 </div>

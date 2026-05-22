@@ -1,5 +1,8 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Pruebas de ventas con generacion PDF. */
+
+use App\Models\Caja;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
@@ -165,4 +168,72 @@ test('seller can create sale', function () {
         ->assertRedirect();
 
     expect(Venta::query()->count())->toBe(1);
+});
+
+// Autor: Sistema - Fecha: 21/05/2026
+// Descripcion: Permite descargar factura PDF para una venta confirmada.
+test('admin can download factura pdf', function () {
+    $admin = User::factory()->admin()->create();
+    $producto = Producto::factory()->create([
+        'precio_venta' => 100,
+    ]);
+    $caja = Caja::query()->create([
+        'user_id_open' => $admin->id,
+        'status' => 'open',
+        'saldo_apertura' => 0,
+        'opened_at' => now(),
+    ]);
+    $venta = Venta::query()->create([
+        'caja_id' => $caja->id,
+        'user_id' => $admin->id,
+        'total' => 100,
+        'descuento' => 0,
+        'estado' => Venta::EstadoConfirmada,
+    ]);
+    $venta->detalles()->create([
+        'producto_id' => $producto->id,
+        'cantidad' => 1,
+        'precio_unitario' => 100,
+        'descuento' => 0,
+        'subtotal' => 100,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('ventas.factura', $venta))
+        ->assertSuccessful()
+        ->assertHeader('content-type', 'application/pdf');
+});
+
+// Autor: Sistema - Fecha: 21/05/2026
+// Descripcion: Permite descargar comprobante PDF para una venta confirmada.
+test('admin can download comprobante pdf', function () {
+    $admin = User::factory()->admin()->create();
+    $producto = Producto::factory()->create([
+        'precio_venta' => 100,
+    ]);
+    $caja = Caja::query()->create([
+        'user_id_open' => $admin->id,
+        'status' => 'open',
+        'saldo_apertura' => 0,
+        'opened_at' => now(),
+    ]);
+    $venta = Venta::query()->create([
+        'caja_id' => $caja->id,
+        'user_id' => $admin->id,
+        'total' => 100,
+        'descuento' => 0,
+        'estado' => Venta::EstadoConfirmada,
+    ]);
+    $venta->detalles()->create([
+        'producto_id' => $producto->id,
+        'cantidad' => 1,
+        'precio_unitario' => 100,
+        'descuento' => 0,
+        'subtotal' => 100,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('ventas.comprobante', $venta))
+        ->assertSuccessful()
+        ->assertHeader('content-type', 'application/pdf');
 });

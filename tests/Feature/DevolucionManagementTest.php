@@ -1,6 +1,9 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Pruebas de devoluciones con nota de credito y saldos. */
+
 use App\Models\Caja;
+use App\Models\CuentaPorCobrar;
 use App\Models\Devolucion;
 use App\Models\Producto;
 use App\Models\User;
@@ -148,6 +151,32 @@ test('show page renders devolucion with detalles', function () {
         ->assertSee('Pendiente')
         ->assertSee(number_format(100, 2))
         ->assertDontSee('No hay detalles registrados');
+});
+
+test('approve creates cuenta por cobrar adjustment', function () {
+    $devolucion = crearDevolucion($this->venta, $this->admin, $this->producto);
+
+    Volt::test('devoluciones.show', ['devolucionId' => $devolucion->id])
+        ->call('approve');
+
+    $cuenta = CuentaPorCobrar::query()
+        ->where('id_venta', $this->venta->id)
+        ->first();
+
+    expect($cuenta)->not->toBeNull()
+        ->and((float) $cuenta->saldo)->toBe(100.0)
+        ->and($cuenta->estado)->toBe(CuentaPorCobrar::EstadoPendiente);
+});
+
+test('admin can download nota credito pdf', function () {
+    $devolucion = crearDevolucion($this->venta, $this->admin, $this->producto);
+
+    Volt::test('devoluciones.show', ['devolucionId' => $devolucion->id])
+        ->call('approve');
+
+    $this->get(route('devoluciones.nota-credito', $devolucion))
+        ->assertSuccessful()
+        ->assertHeader('content-type', 'application/pdf');
 });
 
 function crearDevolucion(Venta $venta, User $user, Producto $producto): Devolucion

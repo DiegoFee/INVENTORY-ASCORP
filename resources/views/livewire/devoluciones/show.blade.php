@@ -1,5 +1,7 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Vista de detalle de devolucion con nota de credito PDF. */
+
 use App\Models\Devolucion;
 use App\Services\DevolucionService;
 use Livewire\Volt\Component;
@@ -14,6 +16,12 @@ new class extends Component {
         $this->loadDevolucion();
     }
 
+    /**
+     * Funcionamiento: inicializa el componente cargando la devolucion solicitada.
+     * Tablas: devoluciones, detalles_devolucion, ventas.
+     * Flujo: delega en loadDevolucion() y deja el modelo en memoria.
+     */
+
     public function loadDevolucion(): void
     {
         $id = $this->devolucionId ?? request()->route('devolucione');
@@ -22,6 +30,12 @@ new class extends Component {
             ->findOrFail($id);
     }
 
+    /**
+     * Funcionamiento: obtiene la devolucion por id y carga sus detalles.
+     * Tablas: devoluciones, detalles_devolucion, productos.
+     * Flujo: resuelve id desde ruta/propiedad y carga relaciones necesarias.
+     */
+
     public function approve(DevolucionService $service): void
     {
         $this->devolucion = $service->procesarDevolucion($this->devolucion);
@@ -29,12 +43,24 @@ new class extends Component {
         session()->flash('success', 'Devolución procesada y stock actualizado.');
     }
 
+    /**
+     * Funcionamiento: procesa devolucion desde la UI y refresca el estado.
+     * Tablas: devoluciones, detalles_devolucion, movimientos_inventario, cuenta_por_cobrar.
+     * Flujo: delega al servicio, actualiza el modelo y muestra mensaje.
+     */
+
     public function reject(DevolucionService $service): void
     {
         $this->devolucion = $service->rejectDevolucion($this->devolucion);
 
         session()->flash('success', 'Devolución rechazada.');
     }
+
+    /**
+     * Funcionamiento: rechaza devolucion desde la UI y refresca el estado.
+     * Tablas: devoluciones.
+     * Flujo: delega al servicio, actualiza el modelo y muestra mensaje.
+     */
 }; ?>
 
 <div class="space-y-6">
@@ -53,6 +79,16 @@ new class extends Component {
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+            @if ($devolucion->estado === \App\Models\Devolucion::EstadoProcesada)
+                <flux:button
+                    href="{{ route('devoluciones.nota-credito', $devolucion) }}"
+                    class="px-3 py-1.5 text-xs"
+                    target="_blank"
+                >
+                    Nota de crédito PDF
+                </flux:button>
+            @endif
+
             @if ($devolucion->estado === \App\Models\Devolucion::EstadoPendiente)
                 <flux:button type="button" wire:click="approve" class="px-3 py-1.5 text-xs">
                     Aprobar devolución

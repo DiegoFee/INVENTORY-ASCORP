@@ -1,8 +1,11 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Servicio de ventas con cierre y cuentas por cobrar. */
+
 namespace App\Services;
 
 use App\Models\Caja;
+use App\Models\CuentaPorCobrar;
 use App\Models\Venta;
 use App\Repositories\VentaRepositoryInterface;
 use Illuminate\Support\Arr;
@@ -16,6 +19,11 @@ class VentaService
         private readonly InventoryMovementService $inventoryService
     ) {}
 
+    /**
+     * Funcionamiento: inyecta repositorio de ventas y servicio de inventario.
+     * Tablas: ventas, movimientos_inventario.
+     * Flujo: prepara dependencias para crear/actualizar/ cerrar ventas.
+     */
     public function createVenta(array $data, array $detalles): Venta
     {
         return DB::transaction(function () use ($data, $detalles): Venta {
@@ -36,6 +44,11 @@ class VentaService
         });
     }
 
+    /**
+     * Funcionamiento: crea venta y detalles con total calculado y caja resuelta.
+     * Tablas: ventas, detalles_venta, cajas.
+     * Flujo: normaliza detalles, calcula total, asigna caja y persiste en transaccion.
+     */
     public function updateVenta(Venta $venta, array $data, array $detalles): Venta
     {
         if ($venta->estado === Venta::EstadoCerrada) {
@@ -58,6 +71,11 @@ class VentaService
         });
     }
 
+    /**
+     * Funcionamiento: actualiza la venta mientras no este cerrada.
+     * Tablas: ventas, detalles_venta.
+     * Flujo: valida estado, recalcula totales y reemplaza detalles en transaccion.
+     */
     public function confirmVenta(Venta $venta): Venta
     {
         if ($venta->estado !== Venta::EstadoBorrador) {
@@ -71,6 +89,11 @@ class VentaService
         );
     }
 
+    /**
+     * Funcionamiento: confirma venta en borrador y carga relaciones.
+     * Tablas: ventas, detalles_venta, clientes, cajas.
+     * Flujo: si esta en borrador, actualiza estado; si no, retorna venta actual.
+     */
     public function closeVenta(Venta $venta): Venta
     {
         if ($venta->estado !== Venta::EstadoConfirmada) {
@@ -92,19 +115,33 @@ class VentaService
                 $this->inventoryService->registerSalidaFromVenta($ventaConDetalles, $detalle);
             }
 
-            return $this->ventas->updateStatus(
+            $ventaCerrada = $this->ventas->updateStatus(
                 $ventaConDetalles,
                 Venta::EstadoCerrada,
                 now()->toDateTimeString()
             );
+
+            $this->ensureCuentaPorCobrar($ventaCerrada);
+
+            return $ventaCerrada;
         });
     }
 
+    /**
+     * Funcionamiento: cierra la venta, descuenta inventario y asegura la cuenta por cobrar.
+     * Tablas: ventas, detalles_venta, movimientos_inventario, cuenta_por_cobrar, productos.
+     * Flujo: valida estado, carga detalles, registra salidas, marca cierre y crea saldo pendiente.
+     */
     private function filtrarVentaData(array $data): array
     {
         return Arr::only($data, ['user_id', 'cliente_id', 'descuento', 'observaciones']);
     }
 
+    /**
+     * Funcionamiento: filtra campos permitidos para persistir ventas.
+     * Tablas: ventas.
+     * Flujo: limita el payload a columnas aprobadas antes de crear/actualizar.
+     */
     private function resolveCajaParaUsuario(int $userId): Caja
     {
         if ($userId < 1) {
@@ -130,6 +167,11 @@ class VentaService
         ]);
     }
 
+    /**
+     * Funcionamiento: obtiene o crea caja abierta para el usuario vendedor.
+     * Tablas: cajas.
+     * Flujo: consulta caja activa; si no existe, crea una nueva con saldo inicial.
+     */
     private function normalizarDetalles(array $detalles): array
     {
         $normalizados = collect($detalles)
@@ -160,8 +202,40 @@ class VentaService
         return $normalizados;
     }
 
+    /**
+     * Funcionamiento: valida y normaliza el detalle de venta con subtotal por linea.
+     * Tablas: detalles_venta.
+     * Flujo: filtra productos validos, recalcula cantidades y subtotal y devuelve arreglo limpio.
+     */
     private function calcularTotal(array $detalles): float
     {
         return (float) collect($detalles)->sum('subtotal');
     }
+
+ /**
+     * Descripción: Asegura la existencia de una cuenta por cobrar vinculada a la venta con montos fiscales en Quetzales.
+     */
+    private function ensureCuentaPorCobrar(Venta $venta): CuentaPorCobrar
+    {
+        $existing = CuentaPorCobrar::query()->where('id_venta', $venta->getKey())->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        // El total ya viene neteado con descuentos globales en Quetzales (Q)
+        return CuentaPorCobrar::query()->create([
+            'id_venta'       => $venta->getKey(),
+            'monto_original' => (float) $venta->total,
+            'saldo'          => (float) $venta->total,
+            'estado'         => CuentaPorCobrar::EstadoPendiente,
+            'observaciones'  => 'Cuenta generada automáticamente al cerrar la venta comercial.',
+        ]);
+    }
 }
+
+    /**
+     * Funcionamiento: crea la cuenta por cobrar si no existe para la venta cerrada.
+     * Tablas: cuenta_por_cobrar, ventas.
+     * Flujo: busca por id_venta y, si no hay registro, crea saldo pendiente con total de venta.
+     */

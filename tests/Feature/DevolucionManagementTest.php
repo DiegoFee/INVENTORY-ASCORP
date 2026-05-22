@@ -160,7 +160,7 @@ test('approve creates cuenta por cobrar adjustment', function () {
         ->call('approve');
 
     $cuenta = CuentaPorCobrar::query()
-        ->where('id_venta', $this->venta->id)
+        ->where('venta_id', $this->venta->id)
         ->first();
 
     expect($cuenta)->not->toBeNull()

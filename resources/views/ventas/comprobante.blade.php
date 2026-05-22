@@ -1,7 +1,12 @@
-{{-- /** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Plantilla PDF de comprobante de entrega. */ --}}
+{{-- /** Autor: Arandi Hurtado, Fecha: 22/05/2026, Descripción: Inicialización de importes comerciales en Quetzales para reporte de entrega. */ --}}
 @php
     $total = (float) $venta->total;
-    $formatMoney = fn (float $value): string => 'Q '.number_format($value, 2);
+    $formatMoney = fn (float $value): string => 'Q ' . number_format($value, 2);
+    
+    // Control de fechas tolerante a fallos
+    $fechaComprobante = $venta->closed_at 
+        ? \Carbon\Carbon::parse($venta->closed_at)->format('d/m/Y') 
+        : \Carbon\Carbon::parse($venta->created_at)->format('d/m/Y');
 @endphp
 {{-- Funcionamiento: define total y formato de moneda para comprobante. Tablas: ventas, detalles_venta. Flujo: usa datos de venta cargados desde controlador. --}}
 <!DOCTYPE html>
@@ -19,8 +24,7 @@
             Venta #{{ $venta->id }}
         </td>
         <td align="right">
-            Fecha: {{ $venta->closed_at?->format('d/m/Y') ?? $venta->created_at?->format('d/m/Y') }}
-        </td>
+            Fecha: {{ $fechaComprobante }}
     </tr>
 </table>
 

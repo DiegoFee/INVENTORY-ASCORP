@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Caja;
+use App\Models\CuentaPorCobrar;  // ← Importante: agregar el modelo
 use App\Models\Venta;
 use App\Repositories\VentaRepositoryInterface;
 use Illuminate\Support\Arr;
@@ -32,7 +33,21 @@ class VentaService
                 'opened_at' => $data['opened_at'] ?? now()->toDateTimeString(),
             ]);
 
-            return $this->ventas->create($payload, $detalleNormalizado);
+            $venta = $this->ventas->create($payload, $detalleNormalizado);
+
+            // 🔥 Crear cuenta por cobrar si la venta es a crédito
+            if (isset($data['tipo_pago']) && $data['tipo_pago'] === 'credito') {
+                CuentaPorCobrar::create([
+                    'venta_id' => $venta->id,
+                    'cliente_id' => $venta->cliente_id,
+                    'total' => $venta->total,
+                    'saldo' => $venta->total,
+                    'fecha_vencimiento' => now()->addDays(30),
+                    'estado' => 'pendiente',
+                ]);
+            }
+
+            return $venta;
         });
     }
 
@@ -102,7 +117,7 @@ class VentaService
 
     private function filtrarVentaData(array $data): array
     {
-        return Arr::only($data, ['user_id', 'cliente_id', 'descuento', 'observaciones']);
+        return Arr::only($data, ['user_id', 'cliente_id', 'descuento', 'observaciones', 'tipo_pago']);
     }
 
     private function resolveCajaParaUsuario(int $userId): Caja

@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\CxcController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -71,4 +72,7 @@ Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {
     Route::resource('productos', ProductoController::class);
 });
 
+Route::get('/cxc', [CxcController::class, 'index'])->name('cxc.index')->middleware('auth');
+Route::get('/cxc/{cuenta}', [CxcController::class, 'show'])->name('cxc.show')->middleware('auth');
+Route::post('/cxc/{cuenta}/abono', [CxcController::class, 'storeAbono'])->name('cxc.abono.store')->middleware('auth');
 require __DIR__.'/auth.php';

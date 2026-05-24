@@ -19,6 +19,7 @@
                     @if (auth()->user()->hasRole(\App\Models\Role::Admin, \App\Models\Role::Seller))
                         <flux:navlist.item icon="shopping-cart" :href="route('ventas.index')" :current="request()->routeIs('ventas.*')" wire:navigate>Ventas</flux:navlist.item>
                         <flux:navlist.item icon="rotate-ccw" :href="route('devoluciones.index')" :current="request()->routeIs('devoluciones.*')" wire:navigate>Devoluciones</flux:navlist.item>
+                        <flux:navlist.item icon="credit-card" :href="route('cxc.index')" :current="request()->routeIs('cxc.*')" wire:navigate>Cuentas por Cobrar</flux:navlist.item>
                     @endif
 
                     @if (auth()->user()->hasRole(\App\Models\Role::Admin))

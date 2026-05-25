@@ -20,6 +20,9 @@
                         <flux:navlist.item icon="shopping-cart" :href="route('ventas.index')" :current="request()->routeIs('ventas.*')" wire:navigate>Ventas</flux:navlist.item>
                         <flux:navlist.item icon="rotate-ccw" :href="route('devoluciones.index')" :current="request()->routeIs('devoluciones.*')" wire:navigate>Devoluciones</flux:navlist.item>
                         <flux:navlist.item icon="credit-card" :href="route('cxc.index')" :current="request()->routeIs('cxc.*')" wire:navigate>Cuentas por Cobrar</flux:navlist.item>
+                            <flux:navlist.item icon="chart-pie" :href="route('reports.ventas')" :current="request()->routeIs('reports.ventas')" wire:navigate>Ventas Comerciales</flux:navlist.item>
+                            <flux:navlist.item icon="clipboard-document-list" :href="route('reports.inventario')" :current="request()->routeIs('reports.inventario')" wire:navigate>Movimientos Stock</flux:navlist.item>
+                            <flux:navlist.item icon="credit-card" :href="route('reports.cxc')" :current="request()->routeIs('reports.cxc')" wire:navigate>Saldos CxC</flux:navlist.item>
                     @endif
 
                     @if (auth()->user()->hasRole(\App\Models\Role::Admin))

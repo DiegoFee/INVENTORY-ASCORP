@@ -1,5 +1,7 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 22/05/2026, Descripción: Vista de detalle de venta interactiva con acciones PDF y cierre transaccional. */
+
 use App\Models\Venta;
 use App\Services\VentaService;
 use Livewire\Volt\Component;
@@ -12,8 +14,16 @@ new class extends Component {
         $this->venta = $venta->load(['usuario', 'cliente', 'caja', 'detalles.producto']);
     }
 
-    public function close(VentaService $service): void
+    /**
+     * Funcionamiento: Cierra la venta de forma segura resolviendo el servicio desde el contenedor de Laravel.
+     * Tablas: ventas, detalles_venta, movimientos_inventario, cuenta_por_cobrar.
+     * Flujo: Resuelve la dependencia, ejecuta lógica de negocio, actualiza estado en UI y despacha alerta.
+     */
+    public function close(): void
     {
+        // Resolución segura del servicio para evitar fallos de inyección en Livewire Volt
+        $service = app(VentaService::class);
+        
         $this->venta = $service->closeVenta($this->venta);
 
         session()->flash('success', 'Venta cerrada y stock descontado correctamente.');
@@ -36,6 +46,23 @@ new class extends Component {
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+            @if ($venta->estado !== \App\Models\Venta::EstadoBorrador)
+                <flux:button
+                    href="{{ route('ventas.factura', $venta) }}"
+                    class="px-3 py-1.5 text-xs"
+                    target="_blank"
+                >
+                    Factura PDF
+                </flux:button>
+                <flux:button
+                    href="{{ route('ventas.comprobante', $venta) }}"
+                    class="px-3 py-1.5 text-xs"
+                    target="_blank"
+                >
+                    Comprobante PDF
+                </flux:button>
+            @endif
+
             @if ($venta->estado === \App\Models\Venta::EstadoConfirmada)
                 <flux:button type="button" wire:click="close" class="px-3 py-1.5 text-xs">
                     Cerrar venta

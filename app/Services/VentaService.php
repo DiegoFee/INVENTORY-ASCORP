@@ -1,9 +1,11 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Servicio de ventas con cierre y cuentas por cobrar. */
+
 namespace App\Services;
 
 use App\Models\Caja;
-use App\Models\CuentaPorCobrar;  // ← Importante: agregar el modelo
+use App\Models\CuentaPorCobrar;
 use App\Models\Venta;
 use App\Repositories\VentaRepositoryInterface;
 use Illuminate\Support\Arr;
@@ -17,6 +19,9 @@ class VentaService
         private readonly InventoryMovementService $inventoryService
     ) {}
 
+    /**
+     * Funcionamiento: inyecta repositorio de ventas y servicio de inventario.
+     */
     public function createVenta(array $data, array $detalles): Venta
     {
         return DB::transaction(function () use ($data, $detalles): Venta {
@@ -35,7 +40,7 @@ class VentaService
 
             $venta = $this->ventas->create($payload, $detalleNormalizado);
 
-            // 🔥 Crear cuenta por cobrar si la venta es a crédito
+            // Crear cuenta por cobrar si la venta es a crédito en la creación directa
             if (isset($data['tipo_pago']) && $data['tipo_pago'] === 'credito') {
                 CuentaPorCobrar::create([
                     'venta_id' => $venta->id,
@@ -43,7 +48,8 @@ class VentaService
                     'total' => $venta->total,
                     'saldo' => $venta->total,
                     'fecha_vencimiento' => now()->addDays(30),
-                    'estado' => 'pendiente',
+                    'estado' => CuentaPorCobrar::EstadoPendiente,
+                    'observaciones' => 'Cuenta de crédito generada al crear la venta.',
                 ]);
             }
 
@@ -51,6 +57,9 @@ class VentaService
         });
     }
 
+    /**
+     * Funcionamiento: actualiza la venta mientras no esté cerrada.
+     */
     public function updateVenta(Venta $venta, array $data, array $detalles): Venta
     {
         if ($venta->estado === Venta::EstadoCerrada) {
@@ -73,6 +82,9 @@ class VentaService
         });
     }
 
+    /**
+     * Funcionamiento: confirma venta en borrador y carga relaciones.
+     */
     public function confirmVenta(Venta $venta): Venta
     {
         if ($venta->estado !== Venta::EstadoBorrador) {
@@ -86,6 +98,9 @@ class VentaService
         );
     }
 
+    /**
+     * Funcionamiento: cierra la venta, descuenta inventario y asegura la cuenta por cobrar.
+     */
     public function closeVenta(Venta $venta): Venta
     {
         if ($venta->estado !== Venta::EstadoConfirmada) {
@@ -107,11 +122,15 @@ class VentaService
                 $this->inventoryService->registerSalidaFromVenta($ventaConDetalles, $detalle);
             }
 
-            return $this->ventas->updateStatus(
+            $ventaCerrada = $this->ventas->updateStatus(
                 $ventaConDetalles,
                 Venta::EstadoCerrada,
                 now()->toDateTimeString()
             );
+
+            $this->ensureCuentaPorCobrar($ventaCerrada);
+
+            return $ventaCerrada;
         });
     }
 
@@ -178,5 +197,27 @@ class VentaService
     private function calcularTotal(array $detalles): float
     {
         return (float) collect($detalles)->sum('subtotal');
+    }
+
+    /**
+     * Descripción: Asegura la existencia de una cuenta por cobrar vinculada con montos estandarizados.
+     */
+    private function ensureCuentaPorCobrar(Venta $venta): CuentaPorCobrar
+    {
+        $existing = CuentaPorCobrar::query()->where('venta_id', $venta->getKey())->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        return CuentaPorCobrar::query()->create([
+            'venta_id'          => $venta->getKey(),
+            'cliente_id'        => $venta->cliente_id,
+            'total'             => (float) $venta->total,
+            'saldo'             => (float) $venta->total,
+            'fecha_vencimiento' => now()->addDays(30),
+            'estado'            => CuentaPorCobrar::EstadoPendiente,
+            'observaciones'     => 'Cuenta generada automáticamente al cerrar la venta comercial en Quetzales.',
+        ]);
     }
 }

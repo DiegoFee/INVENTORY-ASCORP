@@ -1,5 +1,7 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Definicion de rutas web incluyendo PDFs de ventas y devoluciones. */
+
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\InventarioController;
@@ -51,17 +53,30 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:Admin,Vendedor'])->group(function () {
+    Route::get('ventas/{venta}/factura', [VentaController::class, 'factura'])->name('ventas.factura');
+    Route::get('ventas/{venta}/comprobante', [VentaController::class, 'comprobante'])->name('ventas.comprobante');
     Route::resource('ventas', VentaController::class)->only(['index', 'show', 'store', 'update', 'destroy', 'create', 'edit']);
     Route::patch('ventas/{venta}/close', [VentaController::class, 'close'])->name('ventas.close');
 });
 
+/**
+ * Funcionamiento: rutas de ventas con generacion de factura y comprobante en PDF.
+ * Tablas: ventas, detalles_venta, cuenta_por_cobrar.
+ * Flujo: expone endpoints protegidos para ver, editar, cerrar y exportar ventas.
+ */
 Route::middleware(['auth', 'role:Admin,Vendedor'])->group(function () {
     Volt::route('devoluciones/create', 'devoluciones.create')->name('devoluciones.create');
     Route::resource('devoluciones', DevolucionController::class)->only(['index', 'show', 'store']);
+    Route::get('devoluciones/{devolucion}/nota-credito', [DevolucionController::class, 'notaCredito'])->name('devoluciones.nota-credito');
     Route::patch('devoluciones/{devolucion}/approve', [DevolucionController::class, 'approve'])->name('devoluciones.approve');
     Route::patch('devoluciones/{devolucion}/reject', [DevolucionController::class, 'reject'])->name('devoluciones.reject');
 });
 
+/**
+ * Funcionamiento: rutas de devoluciones con nota de credito en PDF.
+ * Tablas: devoluciones, detalles_devolucion, cuenta_por_cobrar.
+ * Flujo: expone endpoints protegidos para crear, aprobar y exportar notas de credito.
+ */
 Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {
     Route::get('inventario', [InventarioController::class, 'index'])->name('inventario.index');
     Route::get('inventario/entrada', [InventarioController::class, 'entrada'])->name('inventario.entrada');

@@ -1,5 +1,7 @@
 <?php
 
+/** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Controlador de devoluciones con nota de credito PDF. */
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RejectDevolucionRequest;
@@ -7,8 +9,10 @@ use App\Http\Requests\StoreDevolucionRequest;
 use App\Models\Devolucion;
 use App\Repositories\DevolucionRepositoryInterface;
 use App\Services\DevolucionService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class DevolucionController extends Controller
 {
@@ -17,11 +21,21 @@ class DevolucionController extends Controller
         private readonly DevolucionService $devolucionService
     ) {}
 
+    /**
+     * Funcionamiento: inyecta repositorio y servicio de devoluciones.
+     * Tablas: devoluciones.
+     * Flujo: prepara dependencias para consultas y operaciones de negocio.
+     */
     public function index(): View
     {
         return view('devoluciones.index');
     }
 
+    /**
+     * Funcionamiento: muestra el listado general de devoluciones.
+     * Tablas: devoluciones.
+     * Flujo: entrega la vista que consume Livewire para listar.
+     */
     public function show(Devolucion $devolucion): View
     {
         return view('devoluciones.show', [
@@ -29,6 +43,28 @@ class DevolucionController extends Controller
         ]);
     }
 
+    /**
+     * Funcionamiento: muestra el detalle completo de una devolucion.
+     * Tablas: devoluciones, detalles_devolucion, ventas.
+     * Flujo: carga relaciones y entrega datos a la vista.
+     */
+    public function notaCredito(Devolucion $devolucion): Response
+    {
+        $devolucion = $this->devoluciones->findWithRelations($devolucion);
+
+        $pdf = Pdf::loadView('devoluciones.nota-credito', [
+            'devolucion' => $devolucion,
+            'ivaTasa' => 0.12,
+        ]);
+
+        return $pdf->stream('nota-credito-'.$devolucion->getKey().'.pdf');
+    }
+
+    /**
+     * Funcionamiento: genera PDF de nota de credito vinculada a la venta.
+     * Tablas: devoluciones, detalles_devolucion, ventas, cuenta_por_cobrar.
+     * Flujo: carga devolucion con venta y detalles, renderiza vista en DomPDF.
+     */
     public function store(StoreDevolucionRequest $request): RedirectResponse
     {
         $validated = $request->validated();
@@ -42,6 +78,11 @@ class DevolucionController extends Controller
             ->with('success', 'Devolución registrada correctamente.');
     }
 
+    /**
+     * Funcionamiento: registra una devolucion nueva desde formulario validado.
+     * Tablas: devoluciones, detalles_devolucion.
+     * Flujo: valida request, delega al servicio y redirige al detalle.
+     */
     public function approve(Devolucion $devolucion): RedirectResponse
     {
         $devolucion = $this->devolucionService->procesarDevolucion($devolucion);
@@ -51,6 +92,11 @@ class DevolucionController extends Controller
             ->with('success', 'Devolución procesada y stock actualizado.');
     }
 
+    /**
+     * Funcionamiento: procesa devolucion y actualiza inventario.
+     * Tablas: devoluciones, detalles_devolucion, movimientos_inventario, cuenta_por_cobrar.
+     * Flujo: delega al servicio y redirige al detalle.
+     */
     public function reject(RejectDevolucionRequest $request, Devolucion $devolucion): RedirectResponse
     {
         $validated = $request->validated();
@@ -62,4 +108,10 @@ class DevolucionController extends Controller
             ->route('devoluciones.show', $devolucion)
             ->with('success', 'Devolución rechazada.');
     }
+
+    /**
+     * Funcionamiento: rechaza una devolucion pendiente.
+     * Tablas: devoluciones.
+     * Flujo: valida request, delega al servicio y redirige al detalle.
+     */
 }

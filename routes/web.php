@@ -3,15 +3,16 @@
 /** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Definicion de rutas web incluyendo PDFs de ventas y devoluciones. */
 
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\CxcController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-use App\Http\Controllers\CxcController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -90,4 +91,18 @@ Route::middleware(['auth', 'role:Admin,Bodeguero'])->group(function () {
 Route::get('/cxc', [CxcController::class, 'index'])->name('cxc.index')->middleware('auth');
 Route::get('/cxc/{cuenta}', [CxcController::class, 'show'])->name('cxc.show')->middleware('auth');
 Route::post('/cxc/{cuenta}/abono', [CxcController::class, 'storeAbono'])->name('cxc.abono.store')->middleware('auth');
+
+/**
+ * Funcionamiento: rutas de reportes con exportacion PDF.
+ * Tablas: ventas, productos, movimientos_inventario, cuentas_por_cobrar.
+ * Flujo: expone formularios de filtros y descarga reportes.
+ */
+Route::middleware(['auth', 'role:Admin'])->group(function () {
+    Route::get('reports/ventas', [ReportController::class, 'ventas'])->name('reports.ventas');
+    Route::get('reports/inventario', [ReportController::class, 'inventario'])->name('reports.inventario');
+    Route::get('reports/cxc', [ReportController::class, 'cxc'])->name('reports.cxc');
+    Route::get('reports/{type}/pdf', [ReportController::class, 'exportPdf'])
+        ->where('type', 'ventas|inventario|cxc')
+        ->name('reports.export');
+});
 require __DIR__.'/auth.php';

@@ -203,7 +203,7 @@ class DevolucionService
         return $cuenta->refresh();
     }
 
-/**
+    /**
      * Funcionamiento: garantiza una cuenta por cobrar existente para la venta.
      * Tablas: cuentas_por_cobrar, ventas, clientes.
      * Flujo: busca por venta_id, resuelve o genera un cliente válido en caliente y registra el saldo inicial.
@@ -214,13 +214,13 @@ class DevolucionService
         $clienteId = $venta->cliente_id;
 
         // 2. Si no tiene (como en los tests viejos), buscamos el primero disponible o lo creamos en caliente
-        if (!$clienteId) {
-            $clienteId = \Illuminate\Support\Facades\DB::table('clientes')->value('id') 
-                ?? \Illuminate\Support\Facades\DB::table('clientes')->insertGetId([
+        if (! $clienteId) {
+            $clienteId = DB::table('clientes')->value('id')
+                ?? DB::table('clientes')->insertGetId([
                     'nombre' => 'Cliente Genérico Comercial',
                     'nit' => 'CF',
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]);
         }
 

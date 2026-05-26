@@ -5,6 +5,7 @@
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CxcController;
 use App\Http\Controllers\DevolucionController;
+use App\Http\Controllers\FosoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ReportController;
@@ -13,7 +14,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-use App\Http\Controllers\FosoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,7 +22,7 @@ Route::get('/', function () {
 Route::resource('suppliers', SupplierController::class)->middleware('auth');
 
 Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified', 'role:Admin'])
+    ->middleware(['auth', 'verified', 'role:Admin,Vendedor,Bodeguero'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {

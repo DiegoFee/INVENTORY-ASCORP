@@ -22,6 +22,9 @@
                         <flux:navlist.item icon="shopping-cart" :href="route('ventas.index')" :current="request()->routeIs('ventas.*')" wire:navigate>Ventas</flux:navlist.item>
                         <flux:navlist.item icon="rotate-ccw" :href="route('devoluciones.index')" :current="request()->routeIs('devoluciones.*')" wire:navigate>Devoluciones</flux:navlist.item>
                         <flux:navlist.item icon="credit-card" :href="route('cxc.index')" :current="request()->routeIs('cxc.*')" wire:navigate>Cuentas por Cobrar</flux:navlist.item>
+                            <flux:navlist.item icon="chart-pie" :href="route('reports.ventas')" :current="request()->routeIs('reports.ventas')" wire:navigate>Ventas Comerciales</flux:navlist.item>
+                            <flux:navlist.item icon="clipboard-document-list" :href="route('reports.inventario')" :current="request()->routeIs('reports.inventario')" wire:navigate>Movimientos Stock</flux:navlist.item>
+                            <flux:navlist.item icon="credit-card" :href="route('reports.cxc')" :current="request()->routeIs('reports.cxc')" wire:navigate>Saldos CxC</flux:navlist.item>
                     @endif
 
                     @if (auth()->user()->hasRole(\App\Models\Role::Admin))
@@ -34,6 +37,7 @@
                         <flux:navlist.item icon="book-open-text" :href="route('compras.index')" :current="request()->routeIs('compras.*')" wire:navigate>Compras</flux:navlist.item>
                         <flux:navlist.item icon="folder-git-2" :href="route('productos.index')" :current="request()->routeIs('productos.*')" wire:navigate>Productos</flux:navlist.item>
                         <flux:navlist.item icon="folder-git-2" :href="route('suppliers.index')" :current="request()->routeIs('suppliers.*')" wire:navigate>Proveedores</flux:navlist.item>
+                        <flux:navlist.item icon="wrench" :href="route('foso.index')" :current="request()->routeIs('foso.*')" wire:navigate>Servicios Foso</flux:navlist.item>
                     @endif
                 </flux:navlist.group>
             </flux:navlist>

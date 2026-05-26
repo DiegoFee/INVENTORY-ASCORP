@@ -98,8 +98,8 @@ class VentaService
         );
     }
 
-    /**
-     * Funcionamiento: cierra la venta, descuenta inventario y asegura la cuenta por cobrar.
+/**
+     * Funcionamiento: cierra la venta, descuenta inventario y asegura la cuenta por cobrar (solo créditos).
      */
     public function closeVenta(Venta $venta): Venta
     {
@@ -128,7 +128,10 @@ class VentaService
                 now()->toDateTimeString()
             );
 
-            $this->ensureCuentaPorCobrar($ventaCerrada);
+            // CORRECCIÓN: Solo se genera cuenta por cobrar si el tipo de pago es crédito
+            if ($ventaCerrada->tipo_pago === 'credito') {
+                $this->ensureCuentaPorCobrar($ventaCerrada);
+            }
 
             return $ventaCerrada;
         });
@@ -199,10 +202,11 @@ class VentaService
         return (float) collect($detalles)->sum('subtotal');
     }
 
-    /**
-     * Descripción: Asegura la existencia de una cuenta por cobrar vinculada con montos estandarizados.
+/**
+     * Autor: Celvin Arandi
+     * Descripción: Asegura la existencia de una cuenta por cobrar al cerrar la venta comercial.
      */
-    private function ensureCuentaPorCobrar(Venta $venta): CuentaPorCobrar
+    public function ensureCuentaPorCobrar(Venta $venta): CuentaPorCobrar
     {
         $existing = CuentaPorCobrar::query()->where('venta_id', $venta->getKey())->first();
 
@@ -210,11 +214,27 @@ class VentaService
             return $existing;
         }
 
+        // Estrategia de seguridad física para MySQL:
+        // Si no hay cliente_id, buscamos el primero o creamos un Consumidor Final comodín.
+        $clienteId = $venta->cliente_id;
+
+        if (!$clienteId) {
+            $clienteComodin = \App\Models\Cliente::query()->firstOrCreate(
+                ['nit' => 'CF'],
+                [
+                    'nombre'    => 'Consumidor Final',
+                    'telefono'  => '00000000',
+                    'direccion' => 'Ciudad'
+                ]
+            );
+            $clienteId = $clienteComodin->id;
+        }
+
         return CuentaPorCobrar::query()->create([
-            'venta_id' => $venta->getKey(),
-            'cliente_id' => $venta->cliente_id,
-            'total' => (float) $venta->total,
-            'saldo' => (float) $venta->total,
+            'venta_id'          => $venta->getKey(),
+            'cliente_id'        => $clienteId,
+            'total'             => (float) $venta->total,
+            'saldo'             => (float) $venta->total,
             'fecha_vencimiento' => now()->addDays(30),
             'estado' => CuentaPorCobrar::EstadoPendiente,
             'observaciones' => 'Cuenta generada automáticamente al cerrar la venta comercial en Quetzales.',

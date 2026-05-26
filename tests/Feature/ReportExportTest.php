@@ -26,7 +26,7 @@ test('admin can export ventas report pdf', function () {
         'total' => 250.50,
         'descuento' => 0,
         'estado' => Venta::EstadoCerrada,
-        'tipo_pago' => 'efectivo',
+        'tipo_pago' => 'contado',
         'opened_at' => now()->subDay(),
         'closed_at' => now(),
     ]);

@@ -31,7 +31,7 @@
                     <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo pago</label>
                     <select name="tipo_pago" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                         <option value="">Todos</option>
-                        <option value="efectivo" {{ request('tipo_pago') === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
+                        <option value="contado" {{ request('tipo_pago') === 'contado' ? 'selected' : '' }}>Efectivo</option>
                         <option value="credito" {{ request('tipo_pago') === 'credito' ? 'selected' : '' }}>Credito</option>
                     </select>
                 </div>

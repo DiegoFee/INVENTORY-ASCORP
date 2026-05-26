@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ServicioFoso;
 use App\Services\InventoryMovementService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -23,7 +23,7 @@ class FosoController extends Controller
             $query->where('estado', $request->estado);
         }
         if ($request->filled('placa')) {
-            $query->where('placa_vehiculo', 'like', '%' . $request->placa . '%');
+            $query->where('placa_vehiculo', 'like', '%'.$request->placa.'%');
         }
 
         $servicios = $query->orderBy('fecha', 'desc')->paginate(10)->appends($request->query());
@@ -39,12 +39,14 @@ class FosoController extends Controller
     public function show(ServicioFoso $servicio): View
     {
         $servicio->load('cliente', 'tecnico', 'detalles.producto');
+
         return view('foso.show', compact('servicio'));
     }
 
     public function destroy(ServicioFoso $servicio): RedirectResponse
     {
         $servicio->delete();
+
         return redirect()->route('foso.index')->with('success', 'Servicio eliminado correctamente.');
     }
 
@@ -57,9 +59,9 @@ class FosoController extends Controller
         foreach ($servicio->detalles as $detalle) {
             $inventoryService->registerSalida([
                 'producto_id' => $detalle->producto_id,
-                'cantidad'    => $detalle->cantidad,
-                'user_id'     => Auth::id(),
-                'observaciones' => 'Salida por servicio de foso #' . $servicio->id,
+                'cantidad' => $detalle->cantidad,
+                'user_id' => Auth::id(),
+                'observaciones' => 'Salida por servicio de foso #'.$servicio->id,
             ]);
         }
 
@@ -73,6 +75,7 @@ class FosoController extends Controller
     {
         $servicio->load('cliente', 'detalles.producto');
         $pdf = Pdf::loadView('foso.comprobante', compact('servicio'));
+
         return $pdf->stream("comprobante-servicio-{$servicio->id}.pdf");
     }
 }

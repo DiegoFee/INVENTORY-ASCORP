@@ -5,6 +5,7 @@
 namespace App\Services;
 
 use App\Models\Caja;
+use App\Models\Cliente;
 use App\Models\CuentaPorCobrar;
 use App\Models\Venta;
 use App\Repositories\VentaRepositoryInterface;
@@ -98,7 +99,7 @@ class VentaService
         );
     }
 
-/**
+    /**
      * Funcionamiento: cierra la venta, descuenta inventario y asegura la cuenta por cobrar (solo créditos).
      */
     public function closeVenta(Venta $venta): Venta
@@ -202,7 +203,7 @@ class VentaService
         return (float) collect($detalles)->sum('subtotal');
     }
 
-/**
+    /**
      * Autor: Celvin Arandi
      * Descripción: Asegura la existencia de una cuenta por cobrar al cerrar la venta comercial.
      */
@@ -218,23 +219,23 @@ class VentaService
         // Si no hay cliente_id, buscamos el primero o creamos un Consumidor Final comodín.
         $clienteId = $venta->cliente_id;
 
-        if (!$clienteId) {
-            $clienteComodin = \App\Models\Cliente::query()->firstOrCreate(
+        if (! $clienteId) {
+            $clienteComodin = Cliente::query()->firstOrCreate(
                 ['nit' => 'CF'],
                 [
-                    'nombre'    => 'Consumidor Final',
-                    'telefono'  => '00000000',
-                    'direccion' => 'Ciudad'
+                    'nombre' => 'Consumidor Final',
+                    'telefono' => '00000000',
+                    'direccion' => 'Ciudad',
                 ]
             );
             $clienteId = $clienteComodin->id;
         }
 
         return CuentaPorCobrar::query()->create([
-            'venta_id'          => $venta->getKey(),
-            'cliente_id'        => $clienteId,
-            'total'             => (float) $venta->total,
-            'saldo'             => (float) $venta->total,
+            'venta_id' => $venta->getKey(),
+            'cliente_id' => $clienteId,
+            'total' => (float) $venta->total,
+            'saldo' => (float) $venta->total,
             'fecha_vencimiento' => now()->addDays(30),
             'estado' => CuentaPorCobrar::EstadoPendiente,
             'observaciones' => 'Cuenta generada automáticamente al cerrar la venta comercial en Quetzales.',

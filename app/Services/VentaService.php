@@ -211,13 +211,13 @@ class VentaService
         }
 
         return CuentaPorCobrar::query()->create([
-            'venta_id'          => $venta->getKey(),
-            'cliente_id'        => $venta->cliente_id,
-            'total'             => (float) $venta->total,
-            'saldo'             => (float) $venta->total,
+            'venta_id' => $venta->getKey(),
+            'cliente_id' => $venta->cliente_id,
+            'total' => (float) $venta->total,
+            'saldo' => (float) $venta->total,
             'fecha_vencimiento' => now()->addDays(30),
-            'estado'            => CuentaPorCobrar::EstadoPendiente,
-            'observaciones'     => 'Cuenta generada automáticamente al cerrar la venta comercial en Quetzales.',
+            'estado' => CuentaPorCobrar::EstadoPendiente,
+            'observaciones' => 'Cuenta generada automáticamente al cerrar la venta comercial en Quetzales.',
         ]);
     }
 }

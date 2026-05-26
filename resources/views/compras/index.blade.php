@@ -23,6 +23,8 @@
             </div>
         @endif
 
+        <livewire:productos.low-stock-alert />
+
         <livewire:compras.list />
     </div>
 </x-layouts.app>

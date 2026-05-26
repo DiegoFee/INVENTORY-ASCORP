@@ -3,6 +3,7 @@
 /** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Definicion de rutas web incluyendo PDFs de ventas y devoluciones. */
 
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\CxcController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\ProductoController;
@@ -11,7 +12,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-use App\Http\Controllers\CxcController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,6 +32,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Volt::route('alertas', 'alertas.index')->name('alertas.index');
+
     Route::view('dashboard/ventas', 'dashboard', [
         'title' => 'Panel de ventas',
         'description' => 'Acceso inicial para vendedores y cajeros.',

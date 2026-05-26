@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Producto;
+use App\Services\AlertaService;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -10,6 +11,13 @@ use Illuminate\Support\Facades\Log;
  */
 class ProductoObserver
 {
+    /**
+     * // Autor: Diego Méndez - Fecha: 26/05/2026
+     */
+    public function __construct(
+        private readonly AlertaService $alertaService
+    ) {}
+
     /**
      * // Autor: Diego Méndez - Fecha: 20/05/2026
      */
@@ -25,5 +33,7 @@ class ProductoObserver
             'stock_anterior' => $producto->getOriginal('stock_actual'),
             'stock_nuevo' => $producto->stock_actual,
         ]);
+
+        $this->alertaService->generateAlertForProducto($producto);
     }
 }

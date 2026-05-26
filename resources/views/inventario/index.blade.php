@@ -7,6 +7,8 @@
             </div>
         </div>
 
+        <livewire:productos.low-stock-alert />
+
         <livewire:inventario.dashboard />
     </div>
 </x-layouts.app>

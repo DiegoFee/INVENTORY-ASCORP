@@ -16,6 +16,8 @@
                 <flux:navlist.group heading="INVENTORY ASCORP" class="grid">
                     <flux:navlist.item icon="home" :href="route($homeRoute)" :current="request()->routeIs($homeRoute)" wire:navigate>Dashboard</flux:navlist.item>
 
+                    <flux:navlist.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" wire:navigate>Alertas</flux:navlist.item>
+
                     @if (auth()->user()->hasRole(\App\Models\Role::Admin, \App\Models\Role::Seller))
                         <flux:navlist.item icon="shopping-cart" :href="route('ventas.index')" :current="request()->routeIs('ventas.*')" wire:navigate>Ventas</flux:navlist.item>
                         <flux:navlist.item icon="rotate-ccw" :href="route('devoluciones.index')" :current="request()->routeIs('devoluciones.*')" wire:navigate>Devoluciones</flux:navlist.item>
@@ -135,6 +137,8 @@
         </flux:header>
 
         {{ $slot }}
+
+        <livewire:alertas.flotantes />
 
         @fluxScripts
     </body>

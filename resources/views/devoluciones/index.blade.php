@@ -19,6 +19,7 @@
                 {{ $errors->first() }}
             </div>
         @endif
+        <livewire:productos.low-stock-alert />
         <livewire:devoluciones.list />
     </div>
 </x-layouts.app>

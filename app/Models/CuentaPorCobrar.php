@@ -15,6 +15,7 @@ class CuentaPorCobrar extends Model
     use HasFactory, SoftDeletes;
 
     public const EstadoPendiente = 'pendiente';
+
     public const EstadoPagada = 'pagada';
 
     protected $table = 'cuentas_por_cobrar';

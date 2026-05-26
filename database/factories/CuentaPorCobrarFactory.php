@@ -4,6 +4,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Cliente;
 use App\Models\CuentaPorCobrar;
 use App\Models\Venta;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,12 +21,14 @@ class CuentaPorCobrarFactory extends Factory
      */
     public function definition(): array
     {
-        $ventaId = Venta::query()->inRandomOrder()->value('id') ?? 1;
+        $total = $this->faker->randomFloat(2, 100, 2000);
 
         return [
-            'id_venta' => $ventaId,
-            'monto_original' => 100,
-            'saldo' => 100,
+            'venta_id' => Venta::factory(),
+            'cliente_id' => Cliente::factory(),
+            'total' => $total,
+            'saldo' => $total,
+            'fecha_vencimiento' => $this->faker->dateTimeBetween('now', '+30 days'),
             'estado' => CuentaPorCobrar::EstadoPendiente,
             'observaciones' => $this->faker->sentence(),
         ];

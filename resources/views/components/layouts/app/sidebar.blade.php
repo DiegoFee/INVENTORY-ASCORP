@@ -35,6 +35,7 @@
                         <flux:navlist.item icon="book-open-text" :href="route('compras.index')" :current="request()->routeIs('compras.*')" wire:navigate>Compras</flux:navlist.item>
                         <flux:navlist.item icon="folder-git-2" :href="route('productos.index')" :current="request()->routeIs('productos.*')" wire:navigate>Productos</flux:navlist.item>
                         <flux:navlist.item icon="folder-git-2" :href="route('suppliers.index')" :current="request()->routeIs('suppliers.*')" wire:navigate>Proveedores</flux:navlist.item>
+                        <flux:navlist.item icon="wrench" :href="route('foso.index')" :current="request()->routeIs('foso.*')" wire:navigate>Servicios Foso</flux:navlist.item>
                     @endif
                 </flux:navlist.group>
             </flux:navlist>

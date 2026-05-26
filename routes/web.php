@@ -13,6 +13,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\FosoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -105,4 +106,11 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
         ->where('type', 'ventas|inventario|cxc')
         ->name('reports.export');
 });
+
+Route::middleware(['auth', 'role:Admin,Warehouse'])->group(function () {
+    Route::resource('foso', FosoController::class)->except(['edit', 'update'])->parameter('foso', 'servicio');
+    Route::patch('foso/{servicio}/close', [FosoController::class, 'close'])->name('foso.close');
+    Route::get('foso/{servicio}/comprobante', [FosoController::class, 'comprobante'])->name('foso.comprobante');
+});
+
 require __DIR__.'/auth.php';

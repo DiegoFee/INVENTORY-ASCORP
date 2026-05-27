@@ -7,7 +7,7 @@
         </div>
     </div>
 
-    <livewire:dashboard.kpi-cards />
+    <livewire:dashboard.report-summary-widget />
 
     <!-- Gráficos -->
     <div class="grid gap-6 lg:grid-cols-2">

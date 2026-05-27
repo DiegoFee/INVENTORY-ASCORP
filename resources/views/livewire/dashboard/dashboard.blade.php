@@ -73,7 +73,7 @@
                         <div>
                             <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Monto Total Adeudado</p>
                             <p class="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">
-                                ${{ number_format($indicadoresCxc['total_adeudado'] ?? 0, 2, '.', ',') }}
+                                Q{{ number_format($indicadoresCxc['total_adeudado'] ?? 0, 2, '.', ',') }}
                             </p>
                         </div>
                         <!-- Icono SVG para dinero -->
@@ -113,7 +113,7 @@
                         <div>
                             <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Monto Vencido</p>
                             <p class="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
-                                ${{ number_format($indicadoresCxc['monto_vencido'] ?? 0, 2, '.', ',') }}
+                                Q{{ number_format($indicadoresCxc['monto_vencido'] ?? 0, 2, '.', ',') }}
                             </p>
                         </div>
                         <!-- Icono SVG para reloj -->

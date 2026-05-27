@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Dashboard;
 
-use App\Services\DashboardService;
 use App\Services\CxcDashboardService;
+use App\Services\DashboardService;
 use Illuminate\View\View;
 use Livewire\Component;
 

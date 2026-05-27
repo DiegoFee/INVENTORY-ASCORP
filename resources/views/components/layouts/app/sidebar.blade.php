@@ -37,6 +37,7 @@
                         <flux:navlist.item icon="folder-git-2" :href="route('suppliers.index')" :current="request()->routeIs('suppliers.*')" wire:navigate>Proveedores</flux:navlist.item>
                         <flux:navlist.item icon="wrench" :href="route('foso.index')" :current="request()->routeIs('foso.*')" wire:navigate>Servicios Foso</flux:navlist.item>
                     @endif
+                    <flux:navlist.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" wire:navigate>Alertas</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
@@ -137,6 +138,8 @@
                 </flux:menu>
             </flux:dropdown>
         </flux:header>
+
+        <livewire:alertas.flotantes />
 
         {{ $slot }}
 

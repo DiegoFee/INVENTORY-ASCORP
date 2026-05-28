@@ -2,14 +2,15 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Role;
+use App\Enums\Permission;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class CloseVentaRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(Role::Admin, Role::Seller) ?? false;
+        return Gate::allows(Permission::VentasClose->value);
     }
 
     public function rules(): array

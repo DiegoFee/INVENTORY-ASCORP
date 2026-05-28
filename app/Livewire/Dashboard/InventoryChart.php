@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Dashboard;
 
+use App\Enums\Permission;
 use App\Services\StatisticsService;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -21,6 +23,8 @@ class InventoryChart extends Component
 
     public function mount(StatisticsService $statisticsService): void
     {
+        Gate::authorize(Permission::InventarioView->value);
+
         $this->distribution = $statisticsService->getInventoryStatusDistribution();
     }
 

@@ -16,28 +16,61 @@
                 <flux:navlist.group heading="INVENTORY ASCORP" class="grid">
                     <flux:navlist.item icon="home" :href="route($homeRoute)" :current="request()->routeIs($homeRoute)" wire:navigate>Dashboard</flux:navlist.item>
 
-                    @if (auth()->user()->hasRole(\App\Models\Role::Admin, \App\Models\Role::Seller))
+                    @can('ventas.view')
                         <flux:navlist.item icon="shopping-cart" :href="route('ventas.index')" :current="request()->routeIs('ventas.*')" wire:navigate>Ventas</flux:navlist.item>
+                    @endcan
+
+                    @can('devoluciones.view')
                         <flux:navlist.item icon="rotate-ccw" :href="route('devoluciones.index')" :current="request()->routeIs('devoluciones.*')" wire:navigate>Devoluciones</flux:navlist.item>
+                    @endcan
+
+                    @can('cxc.view')
                         <flux:navlist.item icon="credit-card" :href="route('cxc.index')" :current="request()->routeIs('cxc.*')" wire:navigate>Cuentas por Cobrar</flux:navlist.item>
-                            <flux:navlist.item icon="chart-pie" :href="route('reports.ventas')" :current="request()->routeIs('reports.ventas')" wire:navigate>Ventas Comerciales</flux:navlist.item>
-                            <flux:navlist.item icon="clipboard-document-list" :href="route('reports.inventario')" :current="request()->routeIs('reports.inventario')" wire:navigate>Movimientos Stock</flux:navlist.item>
-                            <flux:navlist.item icon="credit-card" :href="route('reports.cxc')" :current="request()->routeIs('reports.cxc')" wire:navigate>Saldos CxC</flux:navlist.item>
-                    @endif
+                    @endcan
 
-                    @if (auth()->user()->hasRole(\App\Models\Role::Admin))
+                    @can('reports.ventas.view')
+                        <flux:navlist.item icon="chart-pie" :href="route('reports.ventas')" :current="request()->routeIs('reports.ventas')" wire:navigate>Ventas Comerciales</flux:navlist.item>
+                    @endcan
+
+                    @can('reports.inventario.view')
+                        <flux:navlist.item icon="clipboard-document-list" :href="route('reports.inventario')" :current="request()->routeIs('reports.inventario')" wire:navigate>Movimientos Stock</flux:navlist.item>
+                    @endcan
+
+                    @can('reports.cxc.view')
+                        <flux:navlist.item icon="credit-card" :href="route('reports.cxc')" :current="request()->routeIs('reports.cxc')" wire:navigate>Saldos CxC</flux:navlist.item>
+                    @endcan
+
+                    @can('users.view')
                         <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>Usuarios</flux:navlist.item>
-                        <flux:navlist.item icon="users" :href="route('clientes.index')" :current="request()->routeIs('clientes.*')" wire:navigate>Clientes</flux:navlist.item>
-                    @endif
+                    @endcan
 
-                    @if (auth()->user()->hasRole(\App\Models\Role::Admin, \App\Models\Role::Warehouse))
+                    @can('clientes.view')
+                        <flux:navlist.item icon="users" :href="route('clientes.index')" :current="request()->routeIs('clientes.*')" wire:navigate>Clientes</flux:navlist.item>
+                    @endcan
+
+                    @can('inventario.view')
                         <flux:navlist.item icon="book-open-text" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate>Inventario</flux:navlist.item>
+                    @endcan
+
+                    @can('compras.view')
                         <flux:navlist.item icon="book-open-text" :href="route('compras.index')" :current="request()->routeIs('compras.*')" wire:navigate>Compras</flux:navlist.item>
+                    @endcan
+
+                    @can('productos.view')
                         <flux:navlist.item icon="folder-git-2" :href="route('productos.index')" :current="request()->routeIs('productos.*')" wire:navigate>Productos</flux:navlist.item>
+                    @endcan
+
+                    @can('suppliers.view')
                         <flux:navlist.item icon="folder-git-2" :href="route('suppliers.index')" :current="request()->routeIs('suppliers.*')" wire:navigate>Proveedores</flux:navlist.item>
+                    @endcan
+
+                    @can('foso.view')
                         <flux:navlist.item icon="wrench" :href="route('foso.index')" :current="request()->routeIs('foso.*')" wire:navigate>Servicios Foso</flux:navlist.item>
-                    @endif
-                    <flux:navlist.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" wire:navigate>Alertas</flux:navlist.item>
+                    @endcan
+
+                    @can('alertas.view')
+                        <flux:navlist.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" wire:navigate>Alertas</flux:navlist.item>
+                    @endcan
                 </flux:navlist.group>
             </flux:navlist>
 

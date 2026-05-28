@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Dashboard;
 
+use App\Enums\Permission;
 use App\Services\StatisticsService;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -17,6 +19,8 @@ class SalesChart extends Component
 
     public function mount(StatisticsService $statisticsService): void
     {
+        Gate::authorize(Permission::VentasView->value);
+
         $this->series = $statisticsService->getSalesByLast12Months();
     }
 

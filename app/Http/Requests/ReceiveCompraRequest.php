@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Role;
+use App\Enums\Permission;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * // Autor: Diego Méndez - Fecha: 21/05/2026
@@ -15,7 +16,7 @@ class ReceiveCompraRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(Role::Admin, Role::Warehouse) ?? false;
+        return Gate::allows(Permission::ComprasReceive->value);
     }
 
     /**

@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\Permission;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\ServicioFoso;
 use App\Services\InventoryMovementService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -21,6 +23,8 @@ new class extends Component {
 
     public function mount(?ServicioFoso $servicio = null): void
     {
+        Gate::authorize(Permission::FosoCreate->value);
+
         $this->servicio = $servicio && $servicio->exists ? $servicio->load('detalles.producto') : null;
         $this->fecha = now()->toDateString();
 
@@ -45,11 +49,15 @@ new class extends Component {
 
     public function getClientesProperty(): Collection
     {
+        Gate::authorize(Permission::FosoCreate->value);
+
         return Cliente::query()->orderBy('nombre')->get();
     }
 
     public function addProduct(int $productId): void
     {
+        Gate::authorize(Permission::FosoCreate->value);
+
         $producto = Producto::findOrFail($productId);
 
         if (isset($this->cart[$productId])) {
@@ -74,6 +82,8 @@ new class extends Component {
 
     public function recalculateTotals(): void
     {
+        Gate::authorize(Permission::FosoCreate->value);
+
         $this->subtotal = 0;
         foreach ($this->cart as $item) {
             $this->subtotal += (float) ($item['price'] ?? 0) * max(0, (int) ($item['qty'] ?? 0));
@@ -88,12 +98,16 @@ new class extends Component {
 
     public function removeDetalle(int $productId): void
     {
+        Gate::authorize(Permission::FosoCreate->value);
+
         unset($this->cart[$productId]);
         $this->recalculateTotals();
     }
 
     public function save(InventoryMovementService $service): void
     {
+        Gate::authorize(Permission::FosoCreate->value);
+
         $this->recalculateTotals();
 
         $validated = $this->validate([

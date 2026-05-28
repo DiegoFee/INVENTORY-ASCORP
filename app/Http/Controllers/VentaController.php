@@ -12,6 +12,7 @@ use App\Repositories\VentaRepositoryInterface;
 use App\Services\VentaService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -29,6 +30,8 @@ class VentaController extends Controller
      */
     public function index(): View
     {
+        Gate::authorize('viewAny', Venta::class);
+
         return view('ventas.index');
     }
 
@@ -39,6 +42,8 @@ class VentaController extends Controller
      */
     public function create(): View
     {
+        Gate::authorize('create', Venta::class);
+
         return view('ventas.create');
     }
 
@@ -49,6 +54,8 @@ class VentaController extends Controller
      */
     public function show(Venta $venta): View
     {
+        Gate::authorize('view', $venta);
+
         return view('ventas.show', [
             'venta' => $this->ventas->findWithRelations($venta),
         ]);
@@ -61,6 +68,8 @@ class VentaController extends Controller
      */
     public function factura(Venta $venta): Response
     {
+        Gate::authorize('view', $venta);
+
         $venta = $this->ventas->findWithRelations($venta);
         $serie = 'FAC-001';
         $numero = str_pad((string) $venta->getKey(), 6, '0', STR_PAD_LEFT);
@@ -82,6 +91,8 @@ class VentaController extends Controller
      */
     public function comprobante(Venta $venta): Response
     {
+        Gate::authorize('view', $venta);
+
         $venta = $this->ventas->findWithRelations($venta);
 
         $pdf = Pdf::loadView('ventas.comprobante', [
@@ -116,6 +127,8 @@ class VentaController extends Controller
      */
     public function edit(Venta $venta): View
     {
+        Gate::authorize('update', $venta);
+
         return view('ventas.edit', [
             'venta' => $this->ventas->findWithRelations($venta),
         ]);
@@ -145,6 +158,8 @@ class VentaController extends Controller
      */
     public function destroy(Venta $venta): RedirectResponse
     {
+        Gate::authorize('delete', $venta);
+
         $this->ventas->delete($venta);
 
         return redirect()

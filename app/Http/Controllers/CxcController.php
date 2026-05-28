@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Models\CuentaPorCobrar;
 use App\Models\Pago;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class CxcController extends Controller
 {
     public function index(Request $request): View
     {
+        Gate::authorize(Permission::CxcView->value);
+
         $query = CuentaPorCobrar::with('cliente', 'venta');
 
         if ($request->filled('cliente_id')) {
@@ -28,6 +32,8 @@ class CxcController extends Controller
 
     public function show($id): View
     {
+        Gate::authorize(Permission::CxcView->value);
+
         $cuenta = CuentaPorCobrar::with(['cliente', 'venta', 'pagos'])->findOrFail($id);
 
         return view('cxc.show', compact('cuenta'));
@@ -35,6 +41,8 @@ class CxcController extends Controller
 
     public function storeAbono(Request $request, CuentaPorCobrar $cuenta): RedirectResponse
     {
+        Gate::authorize(Permission::CxcUpdate->value);
+
         $request->validate([
             'monto' => 'required|numeric|min:0.01|max:'.$cuenta->saldo,
             'fecha_pago' => 'required|date',

@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Permission;
 use App\Models\Compra;
-use App\Models\Role;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -18,7 +19,7 @@ class StoreCompraRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(Role::Admin, Role::Warehouse) ?? false;
+        return Gate::allows(Permission::ComprasCreate->value);
     }
 
     /**

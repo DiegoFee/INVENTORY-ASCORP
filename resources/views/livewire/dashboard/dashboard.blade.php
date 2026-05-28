@@ -7,12 +7,19 @@
         </div>
     </div>
 
-    <livewire:dashboard.report-summary-widget />
+    @can('reports.ventas.view')
+        <livewire:dashboard.report-summary-widget />
+    @endcan
 
     <!-- Gráficos -->
     <div class="grid gap-6 lg:grid-cols-2">
-        <livewire:dashboard.sales-chart />
-        <livewire:dashboard.inventory-chart />
+        @can('ventas.view')
+            <livewire:dashboard.sales-chart />
+        @endcan
+
+        @can('inventario.view')
+            <livewire:dashboard.inventory-chart />
+        @endcan
     </div>
 
     <!-- Acciones rápidas, tareas pendientes y alertas -->
@@ -36,7 +43,7 @@
     </div>
 
     <!-- Indicadores de Cuentas por Cobrar -->
-    @if (isset($indicadoresCxc) && is_array($indicadoresCxc))
+    @can('cxc.view')
         <div class="space-y-6">
             <!-- Título de la sección CxC -->
             <div>
@@ -205,7 +212,9 @@
                 </div>
             </div>
         </div>
-    @endif
+    @endcan
 
-    <livewire:dashboard.recent-activity />
+    @can('dashboard.activity.view')
+        <livewire:dashboard.recent-activity />
+    @endcan
 </div>

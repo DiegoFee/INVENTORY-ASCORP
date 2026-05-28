@@ -11,6 +11,7 @@ use App\Repositories\DevolucionRepositoryInterface;
 use App\Services\DevolucionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -28,6 +29,8 @@ class DevolucionController extends Controller
      */
     public function index(): View
     {
+        Gate::authorize('viewAny', Devolucion::class);
+
         return view('devoluciones.index');
     }
 
@@ -38,6 +41,8 @@ class DevolucionController extends Controller
      */
     public function show(Devolucion $devolucion): View
     {
+        Gate::authorize('view', $devolucion);
+
         return view('devoluciones.show', [
             'devolucion' => $this->devoluciones->findWithRelations($devolucion),
         ]);
@@ -50,6 +55,8 @@ class DevolucionController extends Controller
      */
     public function notaCredito(Devolucion $devolucion): Response
     {
+        Gate::authorize('view', $devolucion);
+
         $devolucion = $this->devoluciones->findWithRelations($devolucion);
 
         $pdf = Pdf::loadView('devoluciones.nota-credito', [
@@ -85,6 +92,8 @@ class DevolucionController extends Controller
      */
     public function approve(Devolucion $devolucion): RedirectResponse
     {
+        Gate::authorize('approve', $devolucion);
+
         $devolucion = $this->devolucionService->procesarDevolucion($devolucion);
 
         return redirect()
@@ -99,6 +108,8 @@ class DevolucionController extends Controller
      */
     public function reject(RejectDevolucionRequest $request, Devolucion $devolucion): RedirectResponse
     {
+        Gate::authorize('reject', $devolucion);
+
         $validated = $request->validated();
         $motivo = $validated['motivo'] ?? null;
 

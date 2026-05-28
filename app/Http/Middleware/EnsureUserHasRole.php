@@ -15,6 +15,10 @@ class EnsureUserHasRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
+        if ($request->user()?->isAdministrator()) {
+            return $next($request);
+        }
+
         if (! $request->user()?->hasRole(...$roles)) {
             abort(Response::HTTP_FORBIDDEN);
         }

@@ -6,11 +6,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -25,6 +27,8 @@ class ReportController extends Controller
      */
     public function ventas(): View
     {
+        Gate::authorize(Permission::ReportsVentasView->value);
+
         return view('reports.ventas', [
             'clientes' => Cliente::query()->orderBy('nombre')->get(['id', 'nombre']),
         ]);
@@ -37,6 +41,8 @@ class ReportController extends Controller
      */
     public function inventario(): View
     {
+        Gate::authorize(Permission::ReportsInventarioView->value);
+
         return view('reports.inventario', [
             'productos' => Producto::query()->orderBy('nombre')->get(['id', 'nombre', 'sku']),
         ]);
@@ -49,6 +55,8 @@ class ReportController extends Controller
      */
     public function cxc(): View
     {
+        Gate::authorize(Permission::ReportsCxcView->value);
+
         return view('reports.cxc', [
             'clientes' => Cliente::query()->orderBy('nombre')->get(['id', 'nombre']),
         ]);
@@ -61,6 +69,9 @@ class ReportController extends Controller
      */
     public function exportPdf(string $type, Request $request): Response
     {
+        Gate::authorize(Permission::ReportsExport->value);
+        Gate::authorize($this->permissionForReportType($type)->value);
+
         $report = $this->resolveReportData($type, $request->all());
 
         $pdf = Pdf::loadView('reports.pdf_template', [
@@ -81,6 +92,16 @@ class ReportController extends Controller
             'ventas' => $this->reportService->getVentasReportData($filters),
             'inventario' => $this->reportService->getInventoryReportData($filters),
             'cxc' => $this->reportService->getCxcReportData($filters),
+            default => abort(404),
+        };
+    }
+
+    private function permissionForReportType(string $type): Permission
+    {
+        return match ($type) {
+            'ventas' => Permission::ReportsVentasView,
+            'inventario' => Permission::ReportsInventarioView,
+            'cxc' => Permission::ReportsCxcView,
             default => abort(404),
         };
     }

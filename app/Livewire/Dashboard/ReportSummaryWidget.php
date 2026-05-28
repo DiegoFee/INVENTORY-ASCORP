@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire\Dashboard;
 
+use App\Enums\Permission;
 use App\Models\CuentaPorCobrar;
 use App\Models\Producto;
 use App\Models\Venta;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -19,6 +21,11 @@ use Livewire\Component;
  */
 class ReportSummaryWidget extends Component
 {
+    public function mount(): void
+    {
+        Gate::authorize(Permission::ReportsVentasView->value);
+    }
+
     public function render(): View
     {
         return view('livewire.dashboard.report-summary-widget', [

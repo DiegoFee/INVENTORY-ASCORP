@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Livewire\Dashboard;
 
+use App\Enums\Permission;
 use App\Services\CxcDashboardService;
 use App\Services\DashboardService;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -38,8 +40,9 @@ class Dashboard extends Component
         $this->pendingTasks = $data['pending_tasks'] ?? [];
         $this->alerts = is_array($data['alerts']) ? $data['alerts'] : ($data['alerts']?->all() ?? []);
 
-        // Obtener indicadores de Cuentas por Cobrar
-        $this->indicadoresCxc = $cxcService->getIndicadores();
+        $this->indicadoresCxc = Gate::allows(Permission::CxcView->value)
+            ? $cxcService->getIndicadores()
+            : [];
     }
 
     public function render(): View

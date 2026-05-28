@@ -64,6 +64,11 @@ class User extends Authenticatable // implements MustVerifyEmail
         return $this->role !== null && in_array($this->role->name, $roles, true);
     }
 
+    public function isAdministrator(): bool
+    {
+        return $this->hasRole(Role::Admin);
+    }
+
     public function homeRouteName(): string
     {
         return match ($this->role?->name) {

@@ -2,14 +2,18 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Permission;
 use App\Models\Supplier;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class SupplierRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->isMethod('post')
+            ? Gate::allows(Permission::SuppliersCreate->value)
+            : Gate::allows(Permission::SuppliersUpdate->value);
     }
 
     public function rules(): array

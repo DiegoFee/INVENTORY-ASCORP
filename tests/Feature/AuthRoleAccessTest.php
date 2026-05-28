@@ -1,7 +1,11 @@
 <?php
 
+use App\Models\Devolucion;
+use App\Models\Producto;
 use App\Models\Role;
+use App\Models\Supplier;
 use App\Models\User;
+use App\Models\Venta;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Livewire\Volt\Volt;
@@ -132,7 +136,7 @@ test('seller is blocked from restricted ajax and export requests', function () {
 test('seller cannot delete sales even if the delete route is submitted manually', function () {
     $seller = User::factory()->seller()->create();
     $admin = User::factory()->admin()->create();
-    $venta = \App\Models\Venta::factory()->for($admin, 'usuario')->create();
+    $venta = Venta::factory()->for($admin, 'usuario')->create();
 
     $this->actingAs($seller)
         ->delete(route('ventas.destroy', $venta))
@@ -190,4 +194,119 @@ test('warehouse user cannot bypass foso through livewire actions', function () {
 
     expect(fn () => Volt::test('fosoform'))
         ->toThrow(AuthorizationException::class);
+});
+
+test('seller cannot create product', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)
+        ->get(route('productos.create'))
+        ->assertForbidden();
+
+    $this->actingAs($seller)
+        ->post(route('productos.store'), [
+            'nombre' => 'Test',
+            'stock_actual' => 0,
+            'stock_minimo' => 5,
+        ])->assertForbidden();
+});
+
+test('seller cannot update or delete product', function () {
+    $admin = User::factory()->admin()->create();
+    $seller = User::factory()->seller()->create();
+    $producto = Producto::factory()->create();
+
+    $this->actingAs($seller)
+        ->get(route('productos.edit', $producto))
+        ->assertForbidden();
+
+    $this->actingAs($seller)
+        ->put(route('productos.update', $producto), [
+            'nombre' => 'Updated',
+            'stock_actual' => $producto->stock_actual,
+            'stock_minimo' => $producto->stock_minimo,
+        ])->assertForbidden();
+
+    $this->actingAs($seller)
+        ->delete(route('productos.destroy', $producto))
+        ->assertForbidden();
+});
+
+test('seller cannot create compra', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)
+        ->get(route('compras.create'))
+        ->assertForbidden();
+});
+
+test('seller cannot manage supplier', function () {
+    $seller = User::factory()->seller()->create();
+    $supplier = Supplier::factory()->create();
+
+    $this->actingAs($seller)
+        ->get(route('suppliers.create'))
+        ->assertForbidden();
+
+    $this->actingAs($seller)
+        ->delete(route('suppliers.destroy', $supplier))
+        ->assertForbidden();
+});
+
+test('seller cannot access inventario actions', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)
+        ->get(route('inventario.entrada'))
+        ->assertForbidden();
+
+    $this->actingAs($seller)
+        ->get(route('inventario.salida'))
+        ->assertForbidden();
+});
+
+test('seller can only see own devoluciones', function () {
+    $seller1 = User::factory()->seller()->create();
+    $seller2 = User::factory()->seller()->create();
+    $admin = User::factory()->admin()->create();
+    $venta = Venta::factory()->for($admin, 'usuario')->create();
+
+    $devolucionSeller2 = Devolucion::factory()->create([
+        'user_id' => $seller2->id,
+        'venta_id' => $venta->id,
+    ]);
+
+    $this->actingAs($seller1)
+        ->get(route('devoluciones.show', $devolucionSeller2))
+        ->assertForbidden();
+});
+
+test('warehouse user cannot create venta', function () {
+    $warehouse = User::factory()->warehouse()->create();
+
+    $this->actingAs($warehouse)
+        ->get(route('ventas.create'))
+        ->assertForbidden();
+});
+
+test('warehouse user cannot manage foso', function () {
+    $warehouse = User::factory()->warehouse()->create();
+
+    $this->actingAs($warehouse)
+        ->get(route('foso.index'))
+        ->assertForbidden();
+});
+
+test('unauthenticated user cannot access any protected route', function () {
+    $protectedRoutes = [
+        route('ventas.index'),
+        route('inventario.index'),
+        route('compras.index'),
+        route('productos.index'),
+        route('dashboard'),
+    ];
+
+    foreach ($protectedRoutes as $url) {
+        $this->get($url)->assertRedirect(route('login'));
+    }
 });

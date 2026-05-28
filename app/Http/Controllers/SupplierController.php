@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Http\Requests\SupplierRequest;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class SupplierController extends Controller
@@ -47,6 +49,8 @@ class SupplierController extends Controller
      */
     public function create(): View
     {
+        Gate::authorize(Permission::SuppliersCreate->value);
+
         return view('suppliers.create');
     }
 
@@ -55,6 +59,8 @@ class SupplierController extends Controller
      */
     public function store(SupplierRequest $request): RedirectResponse
     {
+        Gate::authorize(Permission::SuppliersCreate->value);
+
         $data = $request->validated();
 
         // Buscar si ya existe un proveedor con ese NIT (incluyendo eliminados)
@@ -90,6 +96,8 @@ class SupplierController extends Controller
      */
     public function edit(Supplier $supplier): View
     {
+        Gate::authorize(Permission::SuppliersUpdate->value);
+
         return view('suppliers.edit', compact('supplier'));
     }
 
@@ -98,6 +106,8 @@ class SupplierController extends Controller
      */
     public function update(SupplierRequest $request, Supplier $supplier): RedirectResponse
     {
+        Gate::authorize(Permission::SuppliersUpdate->value);
+
         $supplier->update($request->validated());
 
         return redirect()->route('suppliers.index')->with('success', 'Proveedor actualizado correctamente.');
@@ -108,6 +118,8 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier): RedirectResponse
     {
+        Gate::authorize(Permission::SuppliersDelete->value);
+
         $supplier->delete();
 
         return redirect()->route('suppliers.index')->with('success', 'Proveedor eliminado correctamente.');

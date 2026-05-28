@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Http\Requests\ReceiveCompraRequest;
 use App\Http\Requests\StoreCompraRequest;
 use App\Http\Requests\UpdateCompraRequest;
@@ -9,6 +10,7 @@ use App\Models\Compra;
 use App\Repositories\CompraRepositoryInterface;
 use App\Services\CompraService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
@@ -34,6 +36,8 @@ class CompraController extends Controller
      */
     public function create(): View
     {
+        Gate::authorize(Permission::ComprasCreate->value);
+
         return view('compras.create');
     }
 
@@ -42,6 +46,8 @@ class CompraController extends Controller
      */
     public function store(StoreCompraRequest $request): RedirectResponse
     {
+        Gate::authorize(Permission::ComprasCreate->value);
+
         $validated = $request->validated();
         $detalles = $validated['detalles'] ?? [];
 
@@ -67,6 +73,8 @@ class CompraController extends Controller
      */
     public function edit(Compra $compra): View
     {
+        Gate::authorize(Permission::ComprasUpdate->value);
+
         return view('compras.edit', [
             'compra' => $this->compras->findWithRelations($compra),
         ]);
@@ -77,6 +85,8 @@ class CompraController extends Controller
      */
     public function update(UpdateCompraRequest $request, Compra $compra): RedirectResponse
     {
+        Gate::authorize(Permission::ComprasUpdate->value);
+
         $validated = $request->validated();
         $detalles = $validated['detalles'] ?? [];
 
@@ -92,6 +102,8 @@ class CompraController extends Controller
      */
     public function receive(ReceiveCompraRequest $request, Compra $compra): RedirectResponse
     {
+        Gate::authorize(Permission::ComprasReceive->value);
+
         $compra = $this->compraService->receiveCompra($compra);
 
         return redirect()
@@ -104,6 +116,8 @@ class CompraController extends Controller
      */
     public function destroy(Compra $compra): RedirectResponse
     {
+        Gate::authorize(Permission::ComprasDelete->value);
+
         $this->compras->delete($compra);
 
         return redirect()

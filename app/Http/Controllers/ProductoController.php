@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
 use App\Models\Producto;
 use App\Repositories\ProductoRepositoryInterface;
 use App\Services\StockCalculationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
@@ -33,6 +35,8 @@ class ProductoController extends Controller
      */
     public function create(): View
     {
+        Gate::authorize(Permission::ProductosCreate->value);
+
         return view('productos.create');
     }
 
@@ -41,6 +45,8 @@ class ProductoController extends Controller
      */
     public function store(StoreProductoRequest $request): RedirectResponse
     {
+        Gate::authorize(Permission::ProductosCreate->value);
+
         $data = $request->validated();
 
         if (! array_key_exists('activo', $data)) {
@@ -67,6 +73,8 @@ class ProductoController extends Controller
      */
     public function edit(Producto $producto): View
     {
+        Gate::authorize(Permission::ProductosUpdate->value);
+
         return view('productos.edit', compact('producto'));
     }
 
@@ -75,6 +83,8 @@ class ProductoController extends Controller
      */
     public function update(UpdateProductoRequest $request, Producto $producto): RedirectResponse
     {
+        Gate::authorize(Permission::ProductosUpdate->value);
+
         $data = $request->validated();
         $stockActual = (int) $data['stock_actual'];
 
@@ -106,6 +116,8 @@ class ProductoController extends Controller
      */
     public function destroy(Producto $producto): RedirectResponse
     {
+        Gate::authorize(Permission::ProductosDelete->value);
+
         $this->productos->delete($producto);
 
         return redirect()

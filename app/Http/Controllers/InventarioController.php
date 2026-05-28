@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Models\Producto;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
@@ -23,6 +25,8 @@ class InventarioController extends Controller
      */
     public function entrada(): View
     {
+        Gate::authorize(Permission::InventarioEntrada->value);
+
         return view('inventario.entrada');
     }
 
@@ -31,6 +35,8 @@ class InventarioController extends Controller
      */
     public function salida(): View
     {
+        Gate::authorize(Permission::InventarioSalida->value);
+
         return view('inventario.salida');
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -57,5 +58,14 @@ class Devolucion extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(DetalleDevolucion::class, 'devolucion_id');
+    }
+
+    public function scopeWhereOwnedBy(Builder $query, User $user): Builder
+    {
+        if ($user->isAdministrator()) {
+            return $query;
+        }
+
+        return $query->where('user_id', $user->id);
     }
 }

@@ -3,15 +3,17 @@
 namespace App\Repositories;
 
 use App\Models\Devolucion;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class DevolucionRepository implements DevolucionRepositoryInterface
 {
-    public function paginateForList(?string $search, int $perPage = 10): LengthAwarePaginator
+    public function paginateForList(?string $search, ?User $user = null, int $perPage = 10): LengthAwarePaginator
     {
         return Devolucion::query()
             ->with(['venta', 'usuario'])
+            ->whereOwnedBy($user ?? auth()->user())
             ->when($search, function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('id', 'like', '%'.$search.'%');

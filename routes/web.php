@@ -2,6 +2,7 @@
 
 /** Autor: Arandi Hurtado, Fecha: 21/05/2026, Descripción: Definicion de rutas web incluyendo PDFs de ventas y devoluciones. */
 
+use App\Enums\Permission;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CxcController;
 use App\Http\Controllers\DevolucionController;
@@ -12,7 +13,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VentaController;
-use App\Enums\Permission;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 

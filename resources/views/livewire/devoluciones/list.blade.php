@@ -19,7 +19,7 @@ new class extends Component {
     public function getDevolucionesProperty(): LengthAwarePaginator
     {
         return app(DevolucionRepositoryInterface::class)
-            ->paginateForList($this->search);
+            ->paginateForList($this->search, auth()->user());
     }
 }; ?>
 

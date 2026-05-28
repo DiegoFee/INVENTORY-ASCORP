@@ -70,7 +70,7 @@ new class extends Component {
     <div class="grid gap-4 sm:grid-cols-2">
         <div class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
             <dt class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Estado</dt>
-            <dd class="mt-2 text-sm text-zinc-800 dark:text-zinc-100">{{ ucfirst($compra->estado) }}</dd>
+            <dd class="mt-2 text-sm text-zinc-800 dark:text-zinc-100">{{ ucfirst($compra->estado->value) }}</dd>
         </div>
         <div class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
             <dt class="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">Fecha</dt>

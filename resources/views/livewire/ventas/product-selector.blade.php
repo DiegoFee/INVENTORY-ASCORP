@@ -70,7 +70,7 @@ new class extends Component {
                     <div class="mt-2 flex items-center justify-between">
                         <div>
                             <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                                ${{ number_format($producto->precio_venta, 2) }}
+                                Q{{ number_format($producto->precio_venta, 2) }}
                             </span>
                             <span class="ml-2 text-xs {{ $producto->stock_actual > $producto->stock_minimo ? 'text-zinc-500' : 'text-red-600' }}">
                                 Stock: {{ $producto->stock_actual }}

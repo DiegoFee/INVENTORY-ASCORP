@@ -267,12 +267,12 @@ new class extends Component {
                                     </td>
                                     <td class="px-4 py-3">
                                         <span class="text-sm text-zinc-800 dark:text-zinc-100">
-                                            ${{ number_format(max(0, (float) ($item['price'] ?? 0)), 2) }}
+                                            Q{{ number_format(max(0, (float) ($item['price'] ?? 0)), 2) }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
                                         <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                                            ${{ number_format(max(0, (float) ($item['price'] ?? 0) * max(0, (int) ($item['qty'] ?? 0))), 2) }}
+                                            Q{{ number_format(max(0, (float) ($item['price'] ?? 0) * max(0, (int) ($item['qty'] ?? 0))), 2) }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-right">

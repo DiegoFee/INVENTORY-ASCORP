@@ -164,10 +164,10 @@
                                         {{ $cuenta->cliente?->nombre ?? 'Sin cliente' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-300">
-                                        ${{ number_format($cuenta->total ?? 0, 2, '.', ',') }}
+                                        Q{{ number_format($cuenta->total ?? 0, 2, '.', ',') }}
                                     </td>
                                     <td class="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-white">
-                                        ${{ number_format($cuenta->saldo ?? 0, 2, '.', ',') }}
+                                        Q{{ number_format($cuenta->saldo ?? 0, 2, '.', ',') }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-300">
                                         {{ $vencimiento->format('d/m/Y') }}

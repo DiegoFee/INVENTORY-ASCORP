@@ -55,7 +55,7 @@
                 <flux:heading size="xl" class="text-white">
                     Q.{{ number_format((float) ($saldosCxcPorVencer ?? 0), 2, '.', ',') }}
                 </flux:heading>
-                <flux:text class="text-xs text-zinc-400">Total Pending Portfolio / Overdue in 7 days</flux:text>
+                <flux:text class="text-xs text-zinc-400">Total pendiente del portafolio / Vence en 7 días</flux:text>
             </div>
             <flux:button
                 size="sm"

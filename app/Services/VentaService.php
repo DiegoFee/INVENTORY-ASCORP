@@ -140,7 +140,11 @@ class VentaService
 
     private function filtrarVentaData(array $data): array
     {
-        return Arr::only($data, ['user_id', 'cliente_id', 'descuento', 'observaciones', 'tipo_pago']);
+        $filtered = Arr::only($data, ['user_id', 'cliente_id', 'descuento', 'observaciones', 'tipo_pago']);
+
+        $filtered['descuento'] = max(0, (float) ($filtered['descuento'] ?? 0));
+
+        return $filtered;
     }
 
     private function resolveCajaParaUsuario(int $userId): Caja

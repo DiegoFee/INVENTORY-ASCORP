@@ -28,7 +28,6 @@ class AlertaService
             $yaExiste = Alerta::query()
                 ->where('producto_id', $producto->id)
                 ->where('tipo', $tipo)
-                ->where('leida', false)
                 ->exists();
 
             if ($yaExiste) {

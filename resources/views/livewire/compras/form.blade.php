@@ -14,7 +14,7 @@ use Livewire\Volt\Component;
 new class extends Component {
     public ?Compra $compra = null;
     public ?int $proveedor_id = null;
-    public string $estado = Compra::EstadoBorrador;
+    public string $estado = Compra::EstadoBorrador->value;
     public ?string $fecha_compra = null;
     public ?string $observaciones = null;
     public array $detalles = [];
@@ -28,7 +28,7 @@ new class extends Component {
 
         if ($this->compra) {
             $this->proveedor_id = $this->compra->proveedor_id;
-            $this->estado = $this->compra->estado ?: Compra::EstadoBorrador;
+            $this->estado = $this->compra->estado->value ?: Compra::EstadoBorrador->value;
             $this->fecha_compra = $this->compra->fecha_compra?->format('Y-m-d');
             $this->observaciones = $this->compra->observaciones;
             $this->detalles = $this->compra->detalles->map(function ($detalle): array {

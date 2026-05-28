@@ -65,8 +65,8 @@ new class extends Component {
                                 {{ $compra->fecha_compra?->format('d/m/Y') ?? 'Sin fecha' }}
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $compra->estado === 'recibida' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200' : ($compra->estado === 'confirmada' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-200' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200') }}">
-                                    {{ ucfirst($compra->estado) }}
+                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $compra->estado->value === 'recibida' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200' : ($compra->estado->value === 'confirmada' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-200' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200') }}">
+                                    {{ ucfirst($compra->estado->value) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">

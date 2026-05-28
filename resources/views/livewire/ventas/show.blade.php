@@ -4,6 +4,7 @@
 
 use App\Models\Venta;
 use App\Services\VentaService;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -61,6 +62,18 @@ new class extends Component {
                 >
                     Comprobante PDF
                 </flux:button>
+            @endif
+
+            @if ($venta->estado === \App\Models\Venta::EstadoConfirmada || $venta->estado === \App\Models\Venta::EstadoCerrada)
+                @can('devoluciones.create')
+                    <flux:button
+                        href="{{ route('devoluciones.create', ['venta_id' => $venta->id]) }}"
+                        wire:navigate
+                        class="px-3 py-1.5 text-xs"
+                    >
+                        Devolver
+                    </flux:button>
+                @endcan
             @endif
 
             @if ($venta->estado === \App\Models\Venta::EstadoConfirmada)

@@ -2,11 +2,16 @@
 
 use App\Models\Venta;
 use App\Services\DevolucionService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Livewire\WithPagination;
 use Livewire\Volt\Component;
 
 new class extends Component {
+    use WithPagination;
+
     public ?int $venta_id = null;
 
     public ?string $motivo = null;
@@ -15,12 +20,43 @@ new class extends Component {
 
     public ?Venta $ventaSeleccionada = null;
 
-    public function getVentasProperty(): Collection
+    public string $search = '';
+
+    public string $fecha_desde = '';
+
+    public string $fecha_hasta = '';
+
+    public function mount(): void
+    {
+        $ventaIdFromQuery = request()->integer('venta_id');
+        if ($ventaIdFromQuery) {
+            $venta = Venta::where('user_id', Auth::id())
+                ->whereIn('estado', [Venta::EstadoConfirmada, Venta::EstadoCerrada])
+                ->find($ventaIdFromQuery);
+
+            if ($venta) {
+                $this->venta_id = $venta->id;
+                $this->loadVentaDetalles();
+            }
+        }
+    }
+
+    public function getVentasProperty(): LengthAwarePaginator
     {
         return Venta::query()
+            ->with('cliente')
+            ->where('user_id', Auth::id())
             ->whereIn('estado', [Venta::EstadoConfirmada, Venta::EstadoCerrada])
+            ->when($this->search, function ($query, $search): void {
+                $query->where(function ($q) use ($search): void {
+                    $q->where('id', $search)
+                        ->orWhereHas('cliente', fn ($cq) => $cq->where('nombre', 'like', "%{$search}%"));
+                });
+            })
+            ->when($this->fecha_desde, fn ($q) => $q->whereDate('created_at', '>=', $this->fecha_desde))
+            ->when($this->fecha_hasta, fn ($q) => $q->whereDate('created_at', '<=', $this->fecha_hasta))
             ->orderByDesc('id')
-            ->get();
+            ->paginate(10);
     }
 
     public function getTotalProperty(): float
@@ -30,8 +66,9 @@ new class extends Component {
             ->sum(fn (array $d): float => (int) $d['cantidad'] * (float) $d['precio_unitario']);
     }
 
-    public function updatedVentaId(): void
+    public function selectVenta(int $id): void
     {
+        $this->venta_id = $id;
         $this->loadVentaDetalles();
     }
 
@@ -63,6 +100,21 @@ new class extends Component {
                 'selected' => false,
             ];
         })->toArray();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFechaDesde(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFechaHasta(): void
+    {
+        $this->resetPage();
     }
 
     public function save(DevolucionService $service): void
@@ -117,28 +169,111 @@ new class extends Component {
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="space-y-1">
             <flux:heading>Nueva devolución</flux:heading>
-            <flux:subheading>Selecciona una venta y los productos a devolver.</flux:subheading>
+            <flux:subheading>Busca y selecciona una venta para generar la devolución.</flux:subheading>
         </div>
         <a href="{{ route('devoluciones.index') }}" class="text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white" wire:navigate>
             Volver
         </a>
     </div>
-    <form wire:submit="save" class="max-w-4xl space-y-6">
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div class="grid gap-2">
-                <label class="text-sm font-medium text-zinc-800 dark:text-zinc-200" for="venta_id">Venta</label>
-                <select
-                    id="venta_id"
-                    wire:model="venta_id"
-                    wire:change="loadVentaDetalles"
-                    class="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                >
-                    <option value="">Seleccionar venta</option>
-                    @foreach ($this->ventas as $venta)
-                        <option value="{{ $venta->id }}">#{{ $venta->id }} — {{ $venta->cliente?->nombre ?? 'Consumidor final' }} ({{ ucfirst($venta->estado) }})</option>
-                    @endforeach
-                </select>
-                @error('venta_id') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+
+    @if (!$ventaSeleccionada)
+        {{-- Buscador de ventas --}}
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div>
+                <flux:input
+                    wire:model.live.debounce.300ms="search"
+                    label="Buscar"
+                    placeholder="# venta o nombre cliente"
+                />
+            </div>
+            <div>
+                <flux:input
+                    type="date"
+                    wire:model.live="fecha_desde"
+                    label="Desde"
+                />
+            </div>
+            <div>
+                <flux:input
+                    type="date"
+                    wire:model.live="fecha_hasta"
+                    label="Hasta"
+                />
+            </div>
+            <div class="flex items-end">
+                <flux:button wire:click="$set('search', '')" class="w-full">Limpiar</flux:button>
+            </div>
+        </div>
+
+        {{-- Tabla de ventas --}}
+        <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
+                    <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                        <tr>
+                            <th class="px-4 py-3">#</th>
+                            <th class="px-4 py-3">Cliente</th>
+                            <th class="px-4 py-3">Total</th>
+                            <th class="px-4 py-3">Fecha</th>
+                            <th class="px-4 py-3">Estado</th>
+                            <th class="px-4 py-3 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                        @forelse ($this->ventas as $venta)
+                            <tr class="text-zinc-800 hover:bg-zinc-50 dark:text-zinc-100 dark:hover:bg-zinc-800/50">
+                                <td class="px-4 py-3 font-medium">{{ $venta->id }}</td>
+                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $venta->cliente?->nombre ?? 'Consumidor final' }}</td>
+                                <td class="px-4 py-3">{{ number_format((float) $venta->total, 2) }}</td>
+                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $venta->created_at?->format('d/m/Y') ?? '-' }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                                        {{ ucfirst($venta->estado) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <flux:button
+                                        type="button"
+                                        wire:click="selectVenta({{ $venta->id }})"
+                                        class="px-3 py-1.5 text-xs"
+                                    >
+                                        Seleccionar
+                                    </flux:button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                                    No se encontraron ventas.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="text-sm text-zinc-500 dark:text-zinc-400">
+            {{ $this->ventas->total() }} venta(s) encontrada(s)
+        </div>
+
+        {{ $this->ventas->links() }}
+    @endif
+
+    @if ($ventaSeleccionada)
+        <form wire:submit="save" class="max-w-4xl space-y-6">
+            <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span class="font-semibold text-zinc-800 dark:text-zinc-100">
+                        Venta #{{ $ventaSeleccionada->id }} — {{ $ventaSeleccionada->cliente?->nombre ?? 'Consumidor final' }}
+                    </span>
+                    <span class="text-zinc-600 dark:text-zinc-400">
+                        Total venta: {{ number_format((float) $ventaSeleccionada->total, 2) }}
+                    </span>
+                    <flux:button type="button" wire:click="$set('ventaSeleccionada', null)" class="px-2 py-1 text-xs">
+                        Cambiar venta
+                    </flux:button>
+                </div>
             </div>
 
             <div class="grid gap-2">
@@ -150,19 +285,6 @@ new class extends Component {
                     class="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                 ></textarea>
                 @error('motivo') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-            </div>
-        </div>
-
-        @if ($ventaSeleccionada)
-            <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-                <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <span class="font-semibold text-zinc-800 dark:text-zinc-100">
-                        Venta #{{ $ventaSeleccionada->id }} — {{ $ventaSeleccionada->cliente?->nombre ?? 'Consumidor final' }}
-                    </span>
-                    <span class="text-zinc-600 dark:text-zinc-400">
-                        Total venta: {{ number_format((float) $ventaSeleccionada->total, 2) }}
-                    </span>
-                </div>
             </div>
 
             @if (count($detalles) > 0)
@@ -229,11 +351,11 @@ new class extends Component {
             @endif
 
             @error('detalles') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-        @endif
 
-        <div class="flex items-center gap-3">
-            <flux:button variant="primary" type="submit">Registrar devolución</flux:button>
-            <a href="{{ route('devoluciones.index') }}" class="text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white" wire:navigate>Cancelar</a>
-        </div>
-    </form>
+            <div class="flex items-center gap-3">
+                <flux:button variant="primary" type="submit">Registrar devolución</flux:button>
+                <a href="{{ route('devoluciones.index') }}" class="text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white" wire:navigate>Cancelar</a>
+            </div>
+        </form>
+    @endif
 </div>

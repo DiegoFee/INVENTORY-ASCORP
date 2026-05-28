@@ -29,11 +29,19 @@ class DevolucionPolicy
 
     public function approve(User $user, Devolucion $devolucion): bool
     {
-        return $user->isAdministrator();
+        if ($user->isAdministrator()) {
+            return true;
+        }
+
+        return $user->hasRole(Role::Seller) && $devolucion->user_id === $user->id;
     }
 
     public function reject(User $user, Devolucion $devolucion): bool
     {
-        return $user->isAdministrator();
+        if ($user->isAdministrator()) {
+            return true;
+        }
+
+        return $user->hasRole(Role::Seller) && $devolucion->user_id === $user->id;
     }
 }

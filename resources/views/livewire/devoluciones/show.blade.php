@@ -4,6 +4,7 @@
 
 use App\Models\Devolucion;
 use App\Services\DevolucionService;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -38,6 +39,8 @@ new class extends Component {
 
     public function approve(DevolucionService $service): void
     {
+        Gate::authorize('approve', $this->devolucion);
+
         $this->devolucion = $service->procesarDevolucion($this->devolucion);
 
         session()->flash('success', 'Devolución procesada y stock actualizado.');
@@ -51,6 +54,8 @@ new class extends Component {
 
     public function reject(DevolucionService $service): void
     {
+        Gate::authorize('reject', $this->devolucion);
+
         $this->devolucion = $service->rejectDevolucion($this->devolucion);
 
         session()->flash('success', 'Devolución rechazada.');
@@ -90,12 +95,16 @@ new class extends Component {
             @endif
 
             @if ($devolucion->estado === \App\Models\Devolucion::EstadoPendiente)
-                <flux:button type="button" wire:click="approve" class="px-3 py-1.5 text-xs">
-                    Aprobar devolución
-                </flux:button>
-                <flux:button type="button" wire:click="reject" class="px-3 py-1.5 text-xs text-red-700 dark:text-red-300">
-                    Rechazar devolución
-                </flux:button>
+                @can('approve', $devolucion)
+                    <flux:button type="button" wire:click="approve" class="px-3 py-1.5 text-xs">
+                        Aprobar devolución
+                    </flux:button>
+                @endcan
+                @can('reject', $devolucion)
+                    <flux:button type="button" wire:click="reject" class="px-3 py-1.5 text-xs text-red-700 dark:text-red-300">
+                        Rechazar devolución
+                    </flux:button>
+                @endcan
             @endif
         </div>
     </div>

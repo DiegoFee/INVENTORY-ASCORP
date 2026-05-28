@@ -138,7 +138,7 @@ test('create route returns 200 not 404', function () {
     $this->get(route('devoluciones.create'))
         ->assertStatus(200)
         ->assertSee('Nueva devolución')
-        ->assertSee('Seleccionar venta');
+        ->assertSee('Buscar');
 });
 
 test('show page renders devolucion with detalles', function () {

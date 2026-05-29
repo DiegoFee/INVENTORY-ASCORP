@@ -76,7 +76,8 @@ Route::middleware(['auth', 'can:'.Permission::VentasView->value])->group(functio
  */
 Route::middleware(['auth', 'can:'.Permission::DevolucionesView->value])->group(function () {
     Volt::route('devoluciones/create', 'devoluciones.create')->name('devoluciones.create');
-    Route::resource('devoluciones', DevolucionController::class)->only(['index', 'show', 'store']);
+    Route::resource('devoluciones', DevolucionController::class)->only(['index', 'store']);
+    Route::get('devoluciones/{devolucion}', [DevolucionController::class, 'show'])->name('devoluciones.show');
     Route::get('devoluciones/{devolucion}/nota-credito', [DevolucionController::class, 'notaCredito'])->name('devoluciones.nota-credito');
     Route::patch('devoluciones/{devolucion}/approve', [DevolucionController::class, 'approve'])->name('devoluciones.approve');
     Route::patch('devoluciones/{devolucion}/reject', [DevolucionController::class, 'reject'])->name('devoluciones.reject');

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Caja;
 use App\Models\Devolucion;
 use App\Models\Producto;
 use App\Models\Role;
@@ -265,19 +266,104 @@ test('seller cannot access inventario actions', function () {
         ->assertForbidden();
 });
 
-test('seller can only see own devoluciones', function () {
+test('seller can view all devoluciones', function () {
     $seller1 = User::factory()->seller()->create();
     $seller2 = User::factory()->seller()->create();
     $admin = User::factory()->admin()->create();
-    $venta = Venta::factory()->for($admin, 'usuario')->create();
 
-    $devolucionSeller2 = Devolucion::factory()->create([
-        'user_id' => $seller2->id,
-        'venta_id' => $venta->id,
+    $caja = Caja::factory()->create([
+        'user_id_open' => $admin->id,
+        'status' => 'open',
+        'saldo_apertura' => 0,
+        'opened_at' => now(),
     ]);
 
-    $this->actingAs($seller1)
-        ->get(route('devoluciones.show', $devolucionSeller2))
+    // Venta owned by seller1
+    $miVenta = Venta::query()->create([
+        'caja_id' => $caja->id,
+        'user_id' => $seller1->id,
+        'total' => 100,
+        'descuento' => 0,
+        'estado' => Venta::EstadoConfirmada,
+    ]);
+    // Venta owned by seller2
+    $ventaSeller2 = Venta::query()->create([
+        'caja_id' => $caja->id,
+        'user_id' => $seller2->id,
+        'total' => 100,
+        'descuento' => 0,
+        'estado' => Venta::EstadoConfirmada,
+    ]);
+    // Venta owned by admin
+    $ventaAdmin = Venta::query()->create([
+        'caja_id' => $caja->id,
+        'user_id' => $admin->id,
+        'total' => 100,
+        'descuento' => 0,
+        'estado' => Venta::EstadoConfirmada,
+    ]);
+
+    // Devolucion created by admin for seller1's venta — seller1 should see it
+    $devolucionMiVenta = Devolucion::query()->create([
+        'venta_id' => $miVenta->id,
+        'user_id' => $admin->id,
+        'monto' => 50,
+        'motivo' => 'Test',
+        'estado' => Devolucion::EstadoPendiente,
+    ]);
+
+    // Devolucion created by seller2 for seller2's venta — seller1 should NOT see it
+    $devolucionSeller2 = Devolucion::query()->create([
+        'venta_id' => $ventaSeller2->id,
+        'user_id' => $seller2->id,
+        'monto' => 50,
+        'motivo' => 'Test',
+        'estado' => Devolucion::EstadoPendiente,
+    ]);
+
+    // Devolucion for admin's venta — seller1 should NOT see it
+    $devolucionAdmin = Devolucion::query()->create([
+        'venta_id' => $ventaAdmin->id,
+        'user_id' => $seller2->id,
+        'monto' => 50,
+        'motivo' => 'Test',
+        'estado' => Devolucion::EstadoPendiente,
+    ]);
+
+    $this->actingAs($seller1);
+
+    // Seller can see any devolucion
+    $this->get(route('devoluciones.show', $devolucionMiVenta))->assertOk();
+    $this->get(route('devoluciones.show', $devolucionSeller2))->assertOk();
+    $this->get(route('devoluciones.show', $devolucionAdmin))->assertOk();
+});
+
+test('warehouse user cannot view devoluciones', function () {
+    $warehouse = User::factory()->warehouse()->create();
+    $admin = User::factory()->admin()->create();
+    $caja = Caja::query()->create([
+        'user_id_open' => $admin->id,
+        'status' => 'open',
+        'saldo_apertura' => 0,
+        'opened_at' => now(),
+    ]);
+    $venta = Venta::query()->create([
+        'caja_id' => $caja->id,
+        'user_id' => $admin->id,
+        'total' => 100,
+        'descuento' => 0,
+        'estado' => Venta::EstadoConfirmada,
+    ]);
+    $devolucion = Devolucion::query()->create([
+        'venta_id' => $venta->id,
+        'user_id' => $admin->id,
+        'monto' => 50,
+        'motivo' => 'Test',
+        'estado' => Devolucion::EstadoPendiente,
+    ]);
+
+    $this->actingAs($warehouse)
+        ->get(route('devoluciones.show', $devolucion))
         ->assertForbidden();
 });
 

@@ -55,6 +55,7 @@ class DevolucionController extends Controller
      */
     public function notaCredito(Devolucion $devolucion): Response
     {
+        $devolucion->load('venta');
         Gate::authorize('view', $devolucion);
 
         $devolucion = $this->devoluciones->findWithRelations($devolucion);

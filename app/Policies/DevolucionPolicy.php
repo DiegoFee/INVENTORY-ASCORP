@@ -15,11 +15,7 @@ class DevolucionPolicy
 
     public function view(User $user, Devolucion $devolucion): bool
     {
-        if ($user->isAdministrator()) {
-            return true;
-        }
-
-        return $user->hasRole(Role::Seller) && $devolucion->user_id === $user->id;
+        return $user->hasRole(Role::Admin, Role::Seller);
     }
 
     public function create(User $user): bool
@@ -29,19 +25,11 @@ class DevolucionPolicy
 
     public function approve(User $user, Devolucion $devolucion): bool
     {
-        if ($user->isAdministrator()) {
-            return true;
-        }
-
-        return $user->hasRole(Role::Seller) && $devolucion->user_id === $user->id;
+        return $user->hasRole(Role::Admin, Role::Seller);
     }
 
     public function reject(User $user, Devolucion $devolucion): bool
     {
-        if ($user->isAdministrator()) {
-            return true;
-        }
-
-        return $user->hasRole(Role::Seller) && $devolucion->user_id === $user->id;
+        return $user->hasRole(Role::Admin, Role::Seller);
     }
 }
